@@ -29,6 +29,15 @@
 !.env.example
 
 # =============================================================================
+# Local-only briefs, notes & design reference (NEVER commit — repo is public)
+# =============================================================================
+*.local.md
+*.local/
+
+# Inherited boilerplate docs — not part of the shipped project
+/docs/
+
+# =============================================================================
 # Next.js & Build Output
 # =============================================================================
 # Generated directories
