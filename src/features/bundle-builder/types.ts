@@ -3,6 +3,9 @@ import { Cents } from "./lib/money";
 /** The four accordion steps. Union (not string) so selectors get autocomplete + exhaustiveness. */
 export type CategoryId = "cameras" | "plan" | "sensors" | "extra-protection";
 
+/** Sparse map: variantId -> quantity. A missing key means 0. */
+export type Quantities = Record<string, number>;
+
 /**
  * A purchasable color option. Its `id` is the stable quantity key — Red and Blue
  * of the same product are tracked separately, so each needs its own id.
