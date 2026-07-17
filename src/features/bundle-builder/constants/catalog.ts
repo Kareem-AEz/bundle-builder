@@ -1,5 +1,5 @@
 import { PATHS } from "../lib/paths";
-import { Category } from "../types";
+import { Catalog, Category } from "../types";
 
 export const cameras: Category = {
   id: "cameras",
@@ -14,7 +14,7 @@ export const cameras: Category = {
       tagline: "The clearest Wyze Cam ever made.",
       image: PATHS.product("wyze-cam-v4.png"),
       price: 2798,
-      compareAt: 3598, //=> "save 22%" (floor(800/3598*100)) + strikethrough
+      compareAt: 3598, //=> "Save 22%" (floor(800/3598*100)) + strikethrough
       // prettier-ignore
       variants: [
         { id: "cam-v4-white", label: "White", swatch: PATHS.product("wyze-cam-v4-white.png") },
@@ -79,3 +79,79 @@ export const cameras: Category = {
     },
   ],
 };
+
+export const plan: Category = {
+  id: "plan",
+  step: 2,
+  stepTitle: "Choose your plan",
+  reviewLabel: "Plan",
+  reviewOrder: 4,
+  products: [
+    {
+      id: "cam-unlimited",
+      title: "Cam Unlimited",
+      tagline:
+        "Unlimited cloud recording and 24/7 monitoring for every camera.", // inferred copy
+      price: 999,
+      compareAt: 1299, // $12.99 -> $9.99/mo
+      unit: "month",
+      variants: [{ id: "cam-unlimited", label: "", swatch: "" }],
+    },
+    {
+      id: "free-plan",
+      title: "Free",
+      tagline: "Rolling 12-second event clips. No subscription.", // inferred copy
+      price: 0,
+      unit: "month",
+      variants: [{ id: "free-plan", label: "", swatch: "" }],
+    },
+  ],
+};
+
+export const sensors: Category = {
+  id: "sensors",
+  step: 3,
+  stepTitle: "Choose your sensors",
+  reviewLabel: "Sensors",
+  reviewOrder: 2,
+  products: [
+    {
+      id: "sense-motion-sensor",
+      title: "Wyze Sense Motion Sensor",
+      tagline: "Detects movement and triggers instant alerts.", // inferred copy
+      image: PATHS.product("wyze-sense-motion-sensor.png"),
+      price: 2999, // no compareAt ⇒ plain price
+      variants: [{ id: "sense-motion-sensor", label: "", swatch: "" }],
+    },
+    {
+      id: "sense-hub",
+      title: "Wyze Sense Hub",
+      tagline: "The brain of your system — connects and powers every sensor.", // inferred copy
+      image: PATHS.product("wyze-sense-hub.png"),
+      price: 0, // FREE
+      compareAt: 2992, // shows $29.92 struck through, then "FREE"
+      required: true, // min qty 1, minus disabled
+      variants: [{ id: "sense-hub", label: "", swatch: "" }],
+    },
+  ],
+};
+
+export const extraProtection: Category = {
+  id: "extra-protection",
+  step: 4,
+  stepTitle: "Add extra protection",
+  reviewLabel: "Accessories",
+  reviewOrder: 3,
+  products: [
+    {
+      id: "microsd-256gb",
+      title: "Wyze MicroSD Card (256GB)",
+      tagline: "Local backup so your footage survives wifi and cloud outages.", // inferred copy
+      image: PATHS.product("wyze-microsd-card-256gb.png"),
+      price: 2098, // ×2 = $41.96
+      variants: [{ id: "microsd-256gb", label: "", swatch: "" }],
+    },
+  ],
+};
+
+export const CATALOG: Catalog = [cameras, plan, sensors, extraProtection];

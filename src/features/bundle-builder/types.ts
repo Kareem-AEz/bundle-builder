@@ -17,8 +17,7 @@ export type Product = {
   id: string;
   title: string; // "Wyze Cam v4"
   tagline: string; // "The clearest Wyze Cam ever made." — short marketing line
-  description?: string;
-  image: string; // full card photo, reused as the review-panel thumbnail
+  image?: string; // hardware photo + review thumbnail. Absent for plans (services have no product shot).
   price: Cents; // active price
   compareAt?: Cents; // presence => strikethrough + derived "Save X%" badge
   unit?: "month"; // plan is priced /mo; absent => one-time
