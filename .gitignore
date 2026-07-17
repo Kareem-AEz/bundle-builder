@@ -35,7 +35,9 @@
 *.local/
 
 # Inherited boilerplate docs — not part of the shipped project
-/docs/
+/docs/*
+# ...except our own architecture decision records, which ship with the repo
+!/docs/adr/
 
 # =============================================================================
 # Next.js & Build Output
