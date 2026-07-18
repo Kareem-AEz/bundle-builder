@@ -12,7 +12,7 @@ import {
   type BuilderState,
   type BundleStore,
   createBundleStore,
-} from "./useBundleStore";
+} from "./bundle-store";
 
 type BundleContextValue = {
   store: BundleStore;

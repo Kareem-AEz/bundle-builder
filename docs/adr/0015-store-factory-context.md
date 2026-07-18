@@ -63,6 +63,6 @@ the demo's needs — a stronger thing to defend than a client-hardcoded catalog.
   isolation now comes from the store not being shared, replacing save-and-restore of a singleton.
 - Behaviour is unchanged for the user (static data), verified in-browser: a tampered payload still
   clamps to 1, the pre-paint restore has no flash, and card ↔ review stepper sync still works.
-- `store/useBundleStore.ts` no longer exports a hook named `useBundleStore` (the hook moved to the
-  provider); the file name is now slightly misleading and is a candidate for a rename to
-  `bundle-store.ts`.
+- The store file no longer exports a hook named `useBundleStore` (the hook moved to the provider),
+  so it was renamed `store/useBundleStore.ts` → **`store/bundle-store.ts`**. The hook lives in
+  `store/bundle-store-provider.tsx`.

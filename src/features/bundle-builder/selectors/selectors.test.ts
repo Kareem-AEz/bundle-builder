@@ -1,6 +1,6 @@
 import { beforeEach, describe, expect, it } from "vitest";
 import { cameras, CATALOG, plan, sensors } from "../constants/catalog";
-import { type BundleStore, createBundleStore } from "../store/useBundleStore";
+import { type BundleStore, createBundleStore } from "../store/bundle-store";
 import type { Quantities } from "../types";
 import { buildCatalogIndex } from "./catalog-index";
 import {
