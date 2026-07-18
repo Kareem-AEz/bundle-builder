@@ -32,33 +32,29 @@ const stepperButton = cva(
   "tap-target rounded-control focus-visible:ring-brand grid size-5 place-items-center transition-colors focus-visible:ring-2 focus-visible:ring-offset-1 focus-visible:outline-none",
   {
     variants: {
-      kind: { minus: "", plus: "" },
       disabled: { true: "", false: "" },
       tone: { card: "", review: "" },
     },
     compoundVariants: [
-      // Enabled: the card's minus is an outlined white box, its plus a filled one. The
-      // review's steppers sit on the lavender panel, so both read as plain white.
+      // Both ends of the control share one look. The design outlines minus and fills
+      // plus; that reads as two unrelated buttons rather than one stepper.
       {
-        kind: "minus",
         disabled: false,
         tone: "card",
-        className: "border-control-line border-2 bg-white",
+        className: "bg-control border-control-line border-2",
       },
-      { kind: "plus", disabled: false, tone: "card", className: "bg-control" },
       {
         disabled: false,
         tone: "review",
         className: "border-control-line border bg-white",
       },
-      // One disabled look for both kinds: the greyed box the design gives the required
-      // Hub row. (Figma's #F1F1F2 there vs. #F0F4F7 here is a sub-1% delta, not a token.)
       {
         disabled: true,
-        className: "bg-control border-line text-faint border",
+        className:
+          "bg-control border-line text-label cursor-not-allowed border",
       },
     ],
-    defaultVariants: { kind: "minus", disabled: false, tone: "card" },
+    defaultVariants: { disabled: false, tone: "card" },
   },
 );
 
@@ -93,9 +89,12 @@ export function QuantityStepper({
         type="button"
         onClick={onDecrement}
         disabled={minusDisabled}
-        aria-label={`Decrease quantity of ${label}`}
+        aria-label={
+          minusDisabled && value > 0
+            ? `${label} is required and can't be removed`
+            : `Decrease quantity of ${label}`
+        }
         className={stepperButton({
-          kind: "minus",
           disabled: minusDisabled,
           tone,
         })}
@@ -113,7 +112,7 @@ export function QuantityStepper({
         type="button"
         onClick={onIncrement}
         aria-label={`Increase quantity of ${label}`}
-        className={stepperButton({ kind: "plus", disabled: false, tone })}
+        className={stepperButton({ disabled: false, tone })}
       >
         <PlusIcon />
       </button>

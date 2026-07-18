@@ -86,6 +86,7 @@ export const plan: Category = {
   stepTitle: "Choose your plan",
   reviewLabel: "Plan",
   reviewOrder: 4,
+  singleSelect: true,
   products: [
     {
       id: "cam-unlimited",

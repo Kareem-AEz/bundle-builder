@@ -21,6 +21,7 @@ type BuilderActions = {
   decrement: (varintId: string) => void;
   setActiveVariant: (productId: string, variantId: string) => void;
   toggleStep: (step: number) => void;
+  setOpenStep: (step: number | null) => void;
   selectPlan: (variantId: string) => void;
   saveForLater: () => void;
   hydrate: () => void;
@@ -79,6 +80,12 @@ export const useBundleStore = create<BuilderState & BuilderActions>()(
     // Conditional set based on prev state: clicking the open step closes it.
     toggleStep(step) {
       set((s) => ({ openStep: s.openStep === step ? null : step }));
+    },
+
+    // Direct set, not a toggle. Base UI's Accordion reports the *resulting* open set, so
+    // the caller already knows the answer — re-deriving a toggle from it reads backwards.
+    setOpenStep(step) {
+      set({ openStep: step });
     },
 
     //  Singele-select: zero every plan, then set the chosen one to 1

@@ -32,6 +32,7 @@ export type Category = {
   id: CategoryId;
   step: number; // accordion order, 1..4
   stepTitle: string; // "Choose your cameras"
+  singleSelect?: boolean; // products are mutually exclusive (the plan) -- radio, not steppers
   reviewLabel: string; // "Cameras" — review-panel subheading
   reviewOrder: number; // review order differs from step order (Plan is step 2 but shows LAST)
   products: Product[];
