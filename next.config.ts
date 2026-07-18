@@ -45,6 +45,11 @@ const cspHeader = `
 
 const nextConfig: NextConfig = {
   reactCompiler: true,
+
+  // The catalog is read from SQLite, which would otherwise make the page
+  // dynamic. Cache Components lets `use cache` in the catalog query keep the
+  // page prerendered — see src/features/bundle-builder/queries/get-catalog.ts.
+  cacheComponents: true,
   compiler: {
     removeConsole: process.env.NODE_ENV === "production",
   },
