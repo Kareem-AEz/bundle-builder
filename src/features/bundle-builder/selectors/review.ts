@@ -30,6 +30,9 @@ export type ReviewLine = {
   qty: number;
   /** unitPrice * qty, in cents. Precomputed so the panel does no math. */
   lineSubtotal: Cents;
+  /** compareAt * qty, in cents. Absent when not on sale. A line total, like
+   *  `lineSubtotal`, so the struck price and the price under it are comparable. */
+  lineCompareAt?: Cents;
 };
 
 /**
@@ -78,6 +81,10 @@ export function selectReviewGroups(quantities: Quantities): ReviewGroup[] {
             required: product.required,
             qty,
             lineSubtotal: product.price * qty,
+            lineCompareAt:
+              product.compareAt === undefined
+                ? undefined
+                : product.compareAt * qty,
           } satisfies ReviewLine,
         ];
       }),

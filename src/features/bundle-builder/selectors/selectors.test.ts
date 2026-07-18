@@ -4,6 +4,8 @@ import { useBundleStore } from "../store/useBundleStore";
 import type { Quantities } from "../types";
 import {
   selectBadge,
+  selectHardwareSubtotal,
+  selectMonthlySubtotal,
   selectPreDiscountTotal,
   selectReviewGroups,
   selectSavings,
@@ -61,6 +63,49 @@ describe("totals edge cases", () => {
     expect(selectSubtotal(q)).toBe(0);
     expect(selectPreDiscountTotal(q)).toBe(2992);
     expect(selectSavings(q)).toBe(2992);
+  });
+});
+
+describe("one-time and recurring money stay separated", () => {
+  it("splits the seed into $199.88 hardware and $9.99/mo", () => {
+    expect(selectHardwareSubtotal(SEED)).toBe(19988);
+    expect(selectMonthlySubtotal(SEED)).toBe(999);
+  });
+
+  // The whole point of the split: a figure you'd finance or charge once must not have a
+  // subscription folded into it. If someone later drops the `unit` guard, this fails.
+  it("the two halves reconstruct the combined subtotal exactly", () => {
+    expect(selectHardwareSubtotal(SEED) + selectMonthlySubtotal(SEED)).toBe(
+      selectSubtotal(SEED),
+    );
+  });
+
+  it("a cart of nothing but the plan is all recurring, no hardware", () => {
+    const q: Quantities = { "cam-unlimited": 1 };
+    expect(selectHardwareSubtotal(q)).toBe(0);
+    expect(selectMonthlySubtotal(q)).toBe(999);
+  });
+
+  it("a cart of nothing but hardware has no recurring charge", () => {
+    const q: Quantities = { "microsd-256gb": 2 };
+    expect(selectHardwareSubtotal(q)).toBe(4196);
+    expect(selectMonthlySubtotal(q)).toBe(0);
+  });
+
+  it("the $0 Free plan is still recurring, not hardware", () => {
+    const q: Quantities = { "free-plan": 1 };
+    expect(selectHardwareSubtotal(q)).toBe(0);
+    expect(selectMonthlySubtotal(q)).toBe(0);
+  });
+
+  it("both skip unknown ids and non-positive quantities", () => {
+    const q: Quantities = {
+      "ghost-id": 3,
+      "cam-v4-white": 0,
+      "cam-unlimited": -1,
+    };
+    expect(selectHardwareSubtotal(q)).toBe(0);
+    expect(selectMonthlySubtotal(q)).toBe(0);
   });
 });
 
@@ -151,7 +196,27 @@ describe("selectReviewGroups from the seed", () => {
       compareAt: 3998,
       qty: 2,
       lineSubtotal: 6996,
+      lineCompareAt: 7996,
     });
+  });
+
+  // The bug this field exists to prevent: a per-unit strike stacked over a line total.
+  // At qty 1 the two are indistinguishable, so Pan v3 at qty 2 is the case that matters.
+  it("the struck price is a line total, so it stays above the price under it", () => {
+    const cams = groups.find((g) => g.categoryId === "cameras");
+    const pan = cams?.lines.find((l) => l.variantId === "cam-pan-v3-white");
+    expect(pan?.lineCompareAt).toBe(pan!.compareAt! * pan!.qty);
+    expect(pan?.lineCompareAt).toBeGreaterThan(pan!.lineSubtotal);
+  });
+
+  it("every discounted line's strike is compareAt x qty", () => {
+    const discounted = groups
+      .flatMap((g) => g.lines)
+      .filter((l) => l.compareAt !== undefined);
+    expect(discounted.length).toBeGreaterThan(0);
+    for (const line of discounted) {
+      expect(line.lineCompareAt).toBe(line.compareAt! * line.qty);
+    }
   });
 
   it("marks the free Hub required with a zero subtotal and its compareAt intact", () => {
@@ -162,7 +227,15 @@ describe("selectReviewGroups from the seed", () => {
       unitPrice: 0,
       lineSubtotal: 0,
       compareAt: 2992,
+      lineCompareAt: 2992,
     });
+  });
+
+  it("a line with no compareAt carries no strike at all", () => {
+    const acc = groups.find((g) => g.categoryId === "extra-protection");
+    const sd = acc?.lines.find((l) => l.variantId === "microsd-256gb");
+    expect(sd?.compareAt).toBeUndefined();
+    expect(sd?.lineCompareAt).toBeUndefined();
   });
 });
 

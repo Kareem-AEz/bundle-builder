@@ -23,7 +23,11 @@ setting the chosen one to 1.
 - One uniform keyspace: selectors iterate `quantities` without special-casing the plan.
 - "N selected" counts distinct products with any variant quantity > 0 — matching the mock
   (sensors shows "2 selected" for Motion ×2 + Hub ×1).
-- The plan's no-stepper / monthly / single-select behavior is UI + action logic keyed off
-  `category.id === "plan"`, not a state-shape concern.
+- The plan's no-stepper / monthly / single-select behavior is UI + action logic, not a state-shape
+  concern. ~~keyed off `category.id === "plan"`~~ — superseded 2026-07-18: it keys off a
+  `Category.singleSelect` flag instead. Hardcoding a category id in a component would have put a
+  domain fact in the view; the flag keeps it data-driven, so a future exclusive step works with no
+  component change. `StepItem` renders `PlanCard` (radio) or `ProductCard` (stepper) off that flag,
+  and marks the grid `role="radiogroup"` when it is set.
 - Single-variant products share a string namespace between product id and variant id;
   benign because the store only ever keys on variant ids.

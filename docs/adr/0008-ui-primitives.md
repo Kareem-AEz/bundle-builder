@@ -17,14 +17,15 @@ Split behavior from pixels.
 
 - **Behavior / accessibility → Base UI.** It owns the ARIA state machines, roving keyboard, focus,
   and inert-when-closed panels we would otherwise get subtly wrong by hand.
-- **Accordion → Base UI behavior + our own CSS animation.** The open/close is `grid-template-rows:
-  0fr → 1fr` keyed off Base UI's `data-[open]`/`data-[closed]` attributes, gated by
+- **Accordion → Base UI behavior + our own CSS animation.** ~~The open/close is
+  `grid-template-rows: 0fr → 1fr`~~ — **superseded during implementation, see Amendment below.**
+  The open/close animates `height` off Base UI's `--accordion-panel-height`, gated by
   `prefers-reduced-motion`. No animation library, satisfying the pure-CSS motion rule.
 - **Presentational, bespoke components → hand-rolled Tailwind (+ CVA for variants).** Product card,
   review line, quantity stepper, badge pill, price, variant chip. shadcn's generic primitives (e.g.
   `card`) are a bordered div and fight a 1:1 target; there is nothing to reuse.
-- **Button → re-theme the existing `ui/button.tsx`** (already Base UI + CVA). Variant swatch pickers
-  → Base UI `RadioGroup` (single-select with roving tabindex).
+- **Button → re-theme the existing `ui/button.tsx`** (already Base UI + CVA). ~~Variant swatch
+  pickers → Base UI `RadioGroup`~~ — **superseded, see Amendment below.**
 
 ## Consequences
 
@@ -33,3 +34,43 @@ Split behavior from pixels.
   Base UI rather than hand-maintained code.
 - The fidelity surface is entirely ours, so nothing in the library fights the design.
 - One-line defense: borrow the behavior, own the pixels; `base-vega` shadcn is only the scaffold.
+
+## Amendment · 2026-07-18 — two choices reversed during implementation
+
+Both original calls were made before reading the installed Base UI 1.6 docs. Building against the
+real API changed them.
+
+**1. Panel animation: `height`, not `grid-template-rows`.**
+
+The `0fr → 1fr` grid trick exists for exactly one reason: CSS cannot animate to `height: auto`, and
+without JS you cannot know the content's height. Base UI's `Accordion.Panel` measures itself and
+exposes `--accordion-panel-height`, which removes that constraint — so the trick solves a problem we
+no longer have.
+
+It is also the slower of the two. Both animate on the main thread and neither is compositor-only,
+but grid re-resolves track sizing every frame _on top of_ the block layout the height animation
+already performs. Grid is never cheaper here. Layering it over Base UI's own
+`data-starting-style` / `data-ending-style` machinery would also mean two systems driving one
+transition.
+
+```
+h-[var(--accordion-panel-height)] overflow-hidden transition-[height] duration-200 ease-out
+data-starting-style:h-0 data-ending-style:h-0 motion-reduce:transition-none
+```
+
+Still pure CSS, still no animation library. Revisit if `interpolate-size: allow-keywords` reaches
+cross-browser support, which would make animating to `auto` native and drop the measurement.
+
+**2. Selection controls: native radios in labels, not Base UI `RadioGroup`.**
+
+Variant chips and plan cards both use a visually-hidden `<input type="radio">` inside a `<label>`.
+The browser supplies arrow-key navigation, the selected state, and the group name for free — the
+things `RadioGroup` exists to provide — and the label gives a full-size hit target with no JS. One
+less abstraction between the markup and the pixels, which is the point of the split above.
+
+One trap this creates, worth knowing: a `<label>` wrapping a card **natively activates its input
+from any click inside it**, including a nested link. `stopPropagation` does not help, because native
+label activation is not a React synthetic event. Where a card contains both a radio and a link (the
+plan cards' "Learn More"), the label is instead absolutely positioned across the card and the link
+lifts above it on `z-10`. Verified in the browser: clicking "Learn More" navigates without changing
+the selected plan.

@@ -50,3 +50,39 @@ export function selectPreDiscountTotal(quantities: Quantities): Cents {
 export function selectSavings(quantities: Quantities): Cents {
   return selectPreDiscountTotal(quantities) - selectSubtotal(quantities);
 }
+
+/**
+ * One-time hardware only: everything without a recurring `unit`. The plan bills monthly,
+ * so it has no business in a figure you'd finance or charge once.
+ *
+ * @param quantities - variantId -> count, from the store.
+ * @returns Hardware subtotal in cents. Seed -> 19988 ($199.88).
+ */
+export function selectHardwareSubtotal(quantities: Quantities): Cents {
+  let subtotal = 0;
+  for (const [variantId, qty] of Object.entries(quantities)) {
+    if (qty <= 0) continue;
+    const entry = CATALOG_INDEX.get(variantId);
+    if (!entry || entry.product.unit) continue; // skip anything recurring
+    subtotal += entry.product.price * qty;
+  }
+  return subtotal;
+}
+
+/**
+ * The recurring side, on its own so nothing can fold a per-month charge into a one-time
+ * total by accident.
+ *
+ * @param quantities - variantId -> count, from the store.
+ * @returns Monthly charge in cents. Seed -> 999 ($9.99/mo).
+ */
+export function selectMonthlySubtotal(quantities: Quantities): Cents {
+  let monthly = 0;
+  for (const [variantId, qty] of Object.entries(quantities)) {
+    if (qty <= 0) continue;
+    const entry = CATALOG_INDEX.get(variantId);
+    if (!entry || !entry.product.unit) continue;
+    monthly += entry.product.price * qty;
+  }
+  return monthly;
+}
