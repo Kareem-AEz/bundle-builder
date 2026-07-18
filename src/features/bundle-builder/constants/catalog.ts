@@ -93,6 +93,7 @@ export const plan: Category = {
       title: "Cam Unlimited",
       tagline:
         "Unlimited cloud recording and 24/7 monitoring for every camera.", // inferred copy
+      image: PATHS.product("cam-unlimited.svg"),
       price: 999,
       compareAt: 1299, // $12.99 -> $9.99/mo
       unit: "month",
@@ -132,6 +133,7 @@ export const sensors: Category = {
       price: 0, // FREE
       compareAt: 2992, // shows $29.92 struck through, then "FREE"
       required: true, // min qty 1, minus disabled
+      max: 1, // one hub runs the whole system; a second is not a real purchase
       variants: [{ id: "sense-hub", label: "", swatch: "" }],
     },
   ],

@@ -26,6 +26,8 @@ export type ReviewLine = {
   compareAt?: Cents;
   /** Hub only: qty clamps at min 1, so this row's minus button is disabled. */
   required?: boolean;
+  /** Ceiling on qty, when the product has one. Disables this row's plus button. */
+  max?: number;
   /** Count in the cart. Always > 0 for a row that exists. */
   qty: number;
   /** unitPrice * qty, in cents. Precomputed so the panel does no math. */
@@ -74,11 +76,12 @@ export function selectReviewGroups(quantities: Quantities): ReviewGroup[] {
             productId: product.id,
             title: product.title,
             variantLabel: variant.label,
-            image: product.image,
+            image: variant.swatch || product.image,
             unit: product.unit,
             unitPrice: product.price,
             compareAt: product.compareAt,
             required: product.required,
+            max: product.max,
             qty,
             lineSubtotal: product.price * qty,
             lineCompareAt:

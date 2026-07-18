@@ -25,6 +25,17 @@ export type Product = {
   compareAt?: Cents; // presence => strikethrough + derived "Save X%" badge
   unit?: "month"; // plan is priced /mo; absent => one-time
   required?: boolean; // Hub: min quantity 1, stepper minus disabled
+  /**
+   * Ceiling on quantity, per product. The Hub sets 1: one hub runs the whole system, so a
+   * second is not a purchase anyone makes. Left absent everywhere else — most products
+   * have no natural limit.
+   *
+   * This is the other half of `required`, and it exists as data for the same reason: the
+   * rule belongs to the product, not to a component that knows the Hub by name. Without
+   * it a free product with a `compareAt` mints unbounded savings — 30 Hubs read as $897
+   * saved on hardware that was never going to be bought.
+   */
+  max?: number;
   variants: Variant[]; // always ≥1 (option A); selector renders only when length > 1
 };
 
