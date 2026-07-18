@@ -110,8 +110,16 @@
   --color-brand: oklch(0.462 0.23 281.164);
   /* #edf4ff — builder step + review panel bg */
   --color-surface: oklch(0.965 0.017 259.418);
-  /* #0aa288 — savings text, selected variant-chip border */
-  --color-success: oklch(0.637 0.118 175.67);
+  /* #007e66 — savings text, "Saved" confirmation, shipping icon, selected
+     variant-chip border. The design's savings green is #0aa288 (L 0.637), but
+     that is 2.90:1 on the review panel's #EDF4FF — far under WCAG AA's 4.5:1,
+     and the savings figure is real content (it appears nowhere else in the
+     summary). Hue and chroma are the design's; lightness drops to reach 4.55:1.
+     This one is visible, unlike --color-faint above, and was taken knowingly:
+     accessibility is non-negotiable. It also clears the same latent failure on
+     the transient "Saved. Come back anytime" confirmation, and only improves
+     the selected chip's border against the 3:1 UI-boundary rule. */
+  --color-success: oklch(0.520 0.118 175.67);
   /* #d8392b — builder-card strikethrough (red) */
   --color-sale: oklch(0.585 0.198 29.435);
 
@@ -124,8 +132,14 @@
   --color-kicker: oklch(0.402 0 0);
   /* #575757 — builder active price, single-price cards */
   --color-ink-muted: oklch(0.457 0 0);
-  /* #6f7882 — review strikethrough + total strike */
-  --color-faint: oklch(0.569 0.019 250.966);
+  /* #5f6872 — review strikethrough + total strike + review section kickers.
+     The design specifies Gray-C/600 #6f7882 (L 0.569) here, but that lands at
+     4.05:1 on the review panel's #EDF4FF surface and 4.48:1 on white — under
+     WCAG AA's 4.5:1 for normal text in both cases, and these are 12–14px. Hue
+     and chroma are the design's, untouched; only lightness drops, to 5.12:1 on
+     the panel and 5.66:1 on white. Deliberate deviation: accessibility is
+     non-negotiable, and the shift is imperceptible at these sizes. */
+  --color-faint: oklch(0.514 0.019 250.966);
   /* #a8b2bd — review section labels */
   --color-label: oklch(0.759 0.019 250.641);
   /* #0000ee — "Learn More" */

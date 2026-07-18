@@ -101,3 +101,46 @@ lavender surface it ships on.
 - The collapsed-step divider position is the only one that makes the artifact _less_ like the mock.
   It buys a builder with no layout shift on any interaction, which the brief also asks for.
 - These belong in the README's "Decisions & Tradeoffs" section alongside the ADR-0009 items.
+
+## Amendment · 2026-07-19 — the contrast fix in §7 was measured, and it didn't pass
+
+**§7 above claims `--color-faint` (`#6F7882`) "clears 4.5:1". That claim was never measured, and it
+is wrong.** A Lighthouse pass put the accessibility score at 96 with the review panel's kickers and
+strikethrough prices flagged; computing the ratios confirmed it.
+
+| Pair                                   | Ratio      | AA (4.5:1)     |
+| -------------------------------------- | ---------- | -------------- |
+| `#6F7882` on the panel's `#EDF4FF`     | **4.05:1** | fails          |
+| `#6F7882` on white                     | **4.48:1** | fails, by 0.02 |
+| `#0AA288` (savings green) on `#EDF4FF` | **2.90:1** | fails badly    |
+
+§7's _reasoning_ held — the `#A8B2BD` labels really were unreadable, and moving them into the grey
+family was right. It just moved them to a colour that also fails, one measured on a white artboard
+rather than the lavender surface it ships on. The same mistake the ADR diagnoses in the design.
+
+**Both tokens now darken, hue and chroma untouched, lightness only:**
+
+| Token             | Was       | Now       | On panel          | On white          |
+| ----------------- | --------- | --------- | ----------------- | ----------------- |
+| `--color-faint`   | `#6f7882` | `#5f6872` | 4.05 → **5.12:1** | 4.48 → **5.66:1** |
+| `--color-success` | `#0aa288` | `#007e66` | 2.90 → **4.55:1** | 3.20 → **5.03:1** |
+
+The two are not equivalent trades, and were decided separately:
+
+- **`--color-faint` is imperceptible** at 12px uppercase and 14px struck text. Free.
+- **`--color-success` is visible** — the celebratory teal becomes a deeper green. Taken knowingly.
+  The savings figure is content, not decoration: it appears nowhere else in the summary (the rows
+  above show the strike and the total, never the difference). WCAG's large-text exemption doesn't
+  rescue the original either — `#0AA288` fails even 3:1.
+
+`--color-success` is shared, so this also fixed a **latent failure Lighthouse never saw**: the
+"Saved. Come back anytime" confirmation carries the same token but renders only for a few seconds
+after a click, so no audit catches it. It had the identical 2.90:1 problem. The selected variant
+chip's border uses it too and only gains headroom against 1.4.11's 3:1 boundary rule.
+
+`--color-label` (`#a8b2bd`, 1.94:1) is deliberately unchanged. Its only remaining use is the
+disabled stepper icon, and §2 above is right that 1.4.3 exempts disabled controls.
+
+**The rule this establishes: a contrast claim without a measured ratio beside it is not a claim.**
+Where fidelity and WCAG conflict, `AGENTS.md` says accessibility is non-negotiable, and these two
+tokens are what that costs — one invisible, one visible.

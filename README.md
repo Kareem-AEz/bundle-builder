@@ -15,17 +15,30 @@ Base UI · Prisma 7 + SQLite · Vitest.
 Node 20+ (developed on 24). No accounts, no Docker, no services — the database is a local file.
 
 ```bash
+cp .env.example .env  # required before install — see below
 npm install
 npm run db:migrate    # creates prisma/dev.db from the migration
 npm run db:seed       # loads the catalog into it
 npm run dev           # http://localhost:3000
 ```
 
-**`db:migrate` is not optional.** better-sqlite3 creates an empty file on connect, so seeding a
-fresh clone without migrating first fails with `TableDoesNotExist`.
+The defaults in `.env.example` work as-is; nothing needs filling in.
 
-No `.env` is needed — `DATABASE_URL` defaults to `file:./prisma/dev.db`. Copy `.env.example` only
-if you want to point it elsewhere.
+Two ordering constraints, both of which fail loudly if you skip them:
+
+- **`.env` must exist before `npm install`.** `postinstall` runs `prisma generate`, which loads
+  `prisma.config.ts`, which resolves `DATABASE_URL` from the environment. The app's own env schema
+  has a default, but Prisma's CLI doesn't read that schema, so install fails with
+  `Cannot resolve environment variable: DATABASE_URL`.
+- **`db:migrate` before `db:seed`.** better-sqlite3 creates an empty file on connect, so seeding a
+  fresh clone without migrating first fails with `TableDoesNotExist`.
+
+**Re-seeding while the dev server is running has no visible effect until you restart it.** The
+catalog is read through a `use cache` function with `cacheLife("max")` (see
+[How it's built](#how-its-built)), so the cache has no idea the database changed underneath it — it
+is keyed on the code, not on the data. Restart `npm run dev` after any `db:seed`. In an app that
+wrote to the catalog at runtime the proper lever would be `revalidateTag("catalog")`, which is why
+the query is tagged; this one only changes when someone edits `catalog.ts` and re-seeds.
 
 | Task             | Command                                       |
 | ---------------- | --------------------------------------------- |
@@ -62,7 +75,8 @@ Everything in the brief, plus the optional backend.
 - **Responsive** — three layouts (mobile / tablet / desktop) matching the three design frames.
 - **Accessibility** — semantic HTML, `aria-expanded` on accordion headers, labelled steppers with
   truthful disabled reasons, visible focus rings, keyboard-operable throughout, `aria-live` on the
-  save confirmation.
+  save confirmation. Lighthouse accessibility **100**; two design tokens were darkened to get
+  there ([see below](#decisions--tradeoffs)).
 - **Motion** — pure CSS. The accordion animates `height` off a measured custom property; no
   animation library. `prefers-reduced-motion` respected.
 
@@ -128,6 +142,21 @@ Once the catalog arrives at request time, nothing can derive from it at module l
 built by `createBundleStore(catalog)` rather than a module singleton — specifically so `clampQty`
 exists before `hydrate()` can run, which closes a race where a tampered payload would restore
 unclamped.
+
+**Two design tokens were darkened to pass WCAG AA**
+([0011 amendment](docs/adr/0011-stability-over-mock.md)). The design's greys and savings green fail
+contrast on the review panel's tinted surface — measured, not assumed:
+
+| Token             | Design    | Shipped   | On panel          | On white          |
+| ----------------- | --------- | --------- | ----------------- | ----------------- |
+| `--color-faint`   | `#6f7882` | `#5f6872` | 4.05 → **5.12:1** | 4.48 → **5.66:1** |
+| `--color-success` | `#0aa288` | `#007e66` | 2.90 → **4.55:1** | 3.20 → **5.03:1** |
+
+Hue and chroma are the design's; only lightness moves. The first is imperceptible at 12–14px; the
+second is visible, and was taken knowingly — the savings figure is content (it appears nowhere else
+in the summary), and `#0aa288` fails even WCAG's relaxed 3:1 large-text threshold. Where pixel
+fidelity and accessibility conflict, accessibility wins. Disabled controls are left low-contrast on
+purpose: WCAG 1.4.3 exempts them.
 
 **Deliberate deviations from the mock** ([0011](docs/adr/0011-stability-over-mock.md),
 [0016](docs/adr/0016-responsive-breakpoints.md)). The design's three frames disagree with each
