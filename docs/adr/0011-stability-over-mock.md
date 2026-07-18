@@ -58,6 +58,42 @@ variant chips above it. Both goals, no compromise.
 - **"Learn More"** is decorative — there are no product pages in scope. It anchors to its own card's
   `id` rather than dangling on `href="#"`, which would jump to the top of the page.
 
+### 5. The summary carries a recurring line the mock does not draw
+
+The design shows a single grand total. Ours shows a hardware total with `plus $9.99/mo` beneath it.
+Full reasoning is in the ADR-0010 amendment; the short version is that the mock's single number
+cannot be reconciled with the financing chip printed directly above it, and an unreconcilable
+summary is a worse defect than an extra line.
+
+### 6. Review prices sit in a fixed-width column
+
+The review row is thumb, name, stepper, price. Only the price varies in width, so at higher
+quantities it pushed the stepper leftward and the steppers stopped aligning down the column — the
+control moved while the user was clicking it. The review price variant now carries a `76px` floor
+and `tabular-nums`, which pins all three columns and stops digits jittering as counts change.
+
+The rejected alternative was giving each row two lines, name above controls. It removes the
+constraint entirely but grows the panel ~40% taller and abandons the mock's vertical rhythm to fix
+a case that only appears at quantities no real cart reaches. Past ~`$999.99` the price still
+overflows its floor and shifts the stepper; truncating money is not on the table, and a column wide
+enough for four digits leaves a visible gap at every realistic quantity.
+
+### 7. Review section labels are darker than the mock
+
+The design sets the CAMERAS / SENSORS / ACCESSORIES / PLAN labels in `#A8B2BD` on the panel's
+`#EDF4FF` surface — roughly **1.9:1**, far below WCAG 1.4.3's 4.5:1 for text this size. They are
+the only thing telling you which category a row belongs to, so they are content, not decoration,
+and none of the disabled-control exemptions apply.
+
+They now render in `--color-faint` (`#6F7882`), the grey already carrying the review-side
+strikethrough prices. That clears 4.5:1 while staying inside the same grey family, so the labels
+still recede from the item names above them, which was the point of the light grey in the first
+place.
+
+Reproducing `#A8B2BD` exactly would have made the panel unreadable for anyone with low vision, in
+service of a value the design very likely picked by eye on a white artboard rather than the
+lavender surface it ships on.
+
 ## Consequences
 
 - Every deviation above is defensible in one sentence, which is the bar: a reviewer asking "why

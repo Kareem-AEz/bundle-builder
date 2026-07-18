@@ -16,3 +16,7 @@ kind a reviewer would (rightly) question. Each follows _Context · Decision · C
 | [0009](0009-design-tokens.md)         | Manrope, OKLCH, rem units, spacing snapped to the Tailwind scale |
 | [0010](0010-one-time-vs-recurring.md) | One-time vs recurring money split; line strikes are line totals  |
 | [0011](0011-stability-over-mock.md)   | Deliberate deviations: stability, stepper symmetry, tap targets  |
+| [0012](0012-quantity-ceilings.md)     | Products may declare a quantity ceiling; the Hub's is 1          |
+
+**0004, 0006, 0008 and 0010 carry amendments that reverse their original Decision sections.** Read
+the amendment, not only the Decision.

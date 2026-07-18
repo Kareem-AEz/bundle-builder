@@ -56,3 +56,47 @@ figure. It renders as a static row and never touches a selector.
 - The `$0` Free plan counts as recurring, not hardware — it has a `unit`, so cadence is decided by
   billing shape, not by price.
 - Our numbers diverge from the mock's on screen. That is the point; see ADR-0002.
+
+## Amendment · 2026-07-18 — the grand total is hardware-only after all
+
+**This reverses "Do not split the displayed grand total" above.** Read this section, not that
+paragraph.
+
+The original decision leaned on the scope rule: the design shows one number, so we show one number,
+and the mixed-cadence arithmetic was accepted as a confined imperfection. Rendering the panel with
+a large cart is what falsified it. The summary block puts two figures within 40px of each other:
+
+- the financing chip, `as low as $X/mo`, derived from **hardware only**;
+- the grand total, derived from **hardware + the monthly plan**.
+
+Neither is labelled with its base. A reader who tries to reconcile them — the exact thing a review
+panel invites — finds they cannot be reconciled, and the strike and savings figures above compound
+it by using a third scope (whole-cart pre-discount). Three numbers, three bases, no labels. That is
+not a confined imperfection; it is a summary that contradicts itself on screen.
+
+**Decision.** Every figure in the summary reads off hardware:
+
+- total → `selectHardwareSubtotal`
+- strike → `selectHardwarePreDiscountTotal` (new)
+- savings → `selectHardwareSavings` (new)
+- financing chip → unchanged, already hardware-only
+
+The plan moves to its own line beneath the total, `plus $9.99/mo`, hidden when the monthly charge
+is `$0` so the free plan does not render "plus $0.00/mo".
+
+Savings is hardware-only for the same reason: whole-cart savings printed under a hardware-only
+total reproduces the original bug at smaller scale. The plan's own discount is not lost — it still
+shows as a strike on the plan's row, which is where a per-month saving belongs.
+
+`selectSubtotal`, `selectPreDiscountTotal` and `selectSavings` stay exported and tested. They are
+still the whole-cart truth; the summary simply is not the place that needs it.
+
+**Consequences.**
+
+- One visible line the mock does not have. Weighed against a self-contradicting summary, adding it
+  is the smaller deviation. Recorded in ADR-0011 §5.
+- Seed figures move: total `$199.88` (was `$209.87`), strike `$247.80`, savings `$47.92`
+  (was `$50.92`), chip unchanged at `$16.66/mo`. Four tests pin them.
+- The six cart sums collapsed onto one `sumCart(quantities, amount, include)` helper while adding
+  the two new ones. The pre-existing tests are what proves the refactor changed no behaviour — none
+  of them were touched.
