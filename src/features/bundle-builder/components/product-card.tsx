@@ -51,7 +51,9 @@ export function ProductCard({
       // on an href="#" that jumps to the top of the page.
       id={product.id}
       className={cn(
-        "rounded-card flex items-center gap-5 border-2 bg-white p-3",
+        // Image-top on mobile/tablet, image-left on desktop (the card-layout flip the
+        // frames show). Base is the stacked form; xl restores the desktop row.
+        "rounded-card flex flex-col gap-4 border-2 bg-white p-3 xl:flex-row xl:items-center xl:gap-5",
         // The border is always 2px, transparent when unselected, so selecting a card
         // recolours it instead of resizing it. No layout shift on click.
         selected ? "border-brand/70" : "border-transparent",

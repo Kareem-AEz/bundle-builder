@@ -39,12 +39,22 @@ export function BundleBuilder() {
   }, [hydrated]);
 
   return (
-    <div className="flex items-start gap-5" data-bundle-root>
-      <div className="w-[768px] shrink-0">
-        <BuilderAccordion />
-      </div>
-      <div className="w-[399px] shrink-0">
-        <ReviewPanel />
+    <div data-bundle-root>
+      {/* Mobile-only orientation heading (mobile frame). Tablet and desktop open with
+          step 1 already visible, so they don't need it. */}
+      <h1 className="text-ink pb-6 text-center text-3xl font-bold md:hidden">
+        Let&rsquo;s get started!
+      </h1>
+
+      {/* Stacked on mobile and tablet; the fixed two-column layout is desktop-only, where
+          768 + 399 + gap first fits. */}
+      <div className="flex flex-col gap-5 xl:flex-row xl:items-start">
+        <div className="w-full xl:w-[768px] xl:shrink-0">
+          <BuilderAccordion />
+        </div>
+        <div className="w-full xl:w-[399px] xl:shrink-0">
+          <ReviewPanel />
+        </div>
       </div>
     </div>
   );

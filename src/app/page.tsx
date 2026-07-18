@@ -13,7 +13,7 @@ export default async function Home() {
   const catalog = await getCatalog();
 
   return (
-    <main className="mx-auto w-fit py-10">
+    <main className="mx-auto w-full max-w-[1200px] px-4 py-10">
       <BundleStoreProvider catalog={catalog}>
         <BundleBuilder />
       </BundleStoreProvider>

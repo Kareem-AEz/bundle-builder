@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useState } from "react";
+import { cn } from "@/lib/utils";
 import { formatPrice } from "../../lib/money";
 import { PATHS } from "../../lib/paths";
 import {
@@ -29,8 +30,11 @@ const SAVE_LABEL = {
  * typed by hand. Total, strike, savings and the financing chip all read off *hardware*,
  * so they reconcile with each other; the recurring plan gets its own line rather than
  * being folded into a number labelled as a total (ADR-0010 amendment).
+ *
+ * `className` lets the parent size this as the right-hand column of the tablet
+ * two-column review; on mobile and desktop it stacks full-width.
  */
-export function ReviewSummary() {
+export function ReviewSummary({ className }: { className?: string }) {
   const quantities = useBundleStore((s) => s.quantities);
   const activeVariant = useBundleStore((s) => s.activeVariant);
   const saveForLater = useBundleStore((s) => s.saveForLater);
@@ -66,7 +70,22 @@ export function ReviewSummary() {
   const financing = selectFinancingMonthly(quantities, index);
 
   return (
-    <div className="flex flex-col gap-2 pt-4">
+    // pt-4 spaces this below the line items when stacked (mobile, desktop); on the
+    // tablet two-column split it sits beside them, so the top padding comes off.
+    <div className={cn("flex flex-col gap-2 pt-4 md:pt-0 xl:pt-4", className)}>
+      {/* Returns reassurance. Only the tablet frame shows it (the desktop rail is too
+          narrow for it, and the mobile frame omits it), so it is scoped to the md–lg
+          band. The frame sets it beside the rosette; in a ~340px column it reads
+          cleaner stacked above the rosette row, which is the deviation taken here. */}
+      <p className="text-title hidden text-sm leading-snug md:block xl:hidden">
+        <span className="font-semibold">30-day hassle-free returns</span>
+        <br />
+        <span className="text-title/75">
+          If you&rsquo;re not totally in love with the product, we will refund you
+          100%.
+        </span>
+      </p>
+
       <div className="flex items-end justify-between gap-4">
         <Image
           src={PATHS.badge("satisfaction-guarantee.png")}

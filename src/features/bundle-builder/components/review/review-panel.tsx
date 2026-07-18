@@ -27,36 +27,41 @@ export function ReviewPanel() {
         Review
       </p>
 
-      <div className="flex flex-col gap-2.5 px-5 pt-5 pb-8">
-        <div className="flex flex-col gap-[5px]">
-          <h2
-            id="review-heading"
-            className="text-title text-[22px] leading-tight font-semibold"
-          >
-            Your security system
-          </h2>
-          <p className="text-title/75 text-sm leading-[1.3] font-medium">
-            Review your personalized protection system designed to keep what
-            matters most safe.
-          </p>
-        </div>
-
-        <div className="flex flex-col gap-2.5">
-          {groups.length > 0 ? (
-            groups.map((group) => (
-              <ReviewSection key={group.categoryId} group={group} />
-            ))
-          ) : (
-            // The design never shows this, but every quantity is removable, so it is
-            // reachable. Extrapolated from the panel's own voice rather than left blank.
-            <p className="border-line text-faint border-t pt-4 text-sm">
-              Nothing in your system yet. Add a camera to get started.
+      {/* One column on mobile, two on tablet (line items left, summary right), back to
+          one in the narrow desktop rail. The summary is a sibling of the line-items
+          block so `flex-row` at md can set them side by side. */}
+      <div className="flex flex-col gap-2.5 px-5 pt-5 pb-8 md:flex-row md:gap-8 xl:flex-col xl:gap-2.5">
+        <div className="flex flex-1 flex-col gap-2.5">
+          <div className="flex flex-col gap-[5px]">
+            <h2
+              id="review-heading"
+              className="text-title text-[22px] leading-tight font-semibold"
+            >
+              Your security system
+            </h2>
+            <p className="text-title/75 text-sm leading-[1.3] font-medium">
+              Review your personalized protection system designed to keep what
+              matters most safe.
             </p>
-          )}
-          <FastShippingRow />
+          </div>
+
+          <div className="flex flex-col gap-2.5">
+            {groups.length > 0 ? (
+              groups.map((group) => (
+                <ReviewSection key={group.categoryId} group={group} />
+              ))
+            ) : (
+              // The design never shows this, but every quantity is removable, so it is
+              // reachable. Extrapolated from the panel's own voice rather than left blank.
+              <p className="border-line text-faint border-t pt-4 text-sm">
+                Nothing in your system yet. Add a camera to get started.
+              </p>
+            )}
+            <FastShippingRow />
+          </div>
         </div>
 
-        <ReviewSummary />
+        <ReviewSummary className="md:w-[340px] md:shrink-0 xl:w-auto" />
       </div>
     </aside>
   );
