@@ -17,6 +17,13 @@ kind a reviewer would (rightly) question. Each follows _Context · Decision · C
 | [0010](0010-one-time-vs-recurring.md) | One-time vs recurring money split; line strikes are line totals  |
 | [0011](0011-stability-over-mock.md)   | Deliberate deviations: stability, stepper symmetry, tap targets  |
 | [0012](0012-quantity-ceilings.md)     | Products may declare a quantity ceiling; the Hub's is 1          |
+| [0013](0013-sqlite-local-file.md)     | SQLite as a local file, via the better-sqlite3 driver adapter    |
+| [0014](0014-db-catalog-static-cache.md) | Catalog read from SQLite through `use cache`; page stays static |
+| [0015](0015-store-factory-context.md) | Per-request store factory behind context; selectors take catalog |
+| [0016](0016-responsive-breakpoints.md) | Responsive: three layouts, mobile-first, pure CSS              |
 
 **0004, 0006, 0008 and 0010 carry amendments that reverse their original Decision sections.** Read
 the amendment, not only the Decision.
+
+0013–0016 realise the SQLite/server-catalog bonus that 0005 anticipated: 0013 (infra) → 0014
+(read + cache) → 0015 (thread the catalog through the store) → 0016 (responsive).
