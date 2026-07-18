@@ -39,12 +39,16 @@ const envSchema = z.object({
   // =============================================================================
   // Database
   // =============================================================================
-  DATABASE_DIRECT_URL: z.url(
-    "DATABASE_DIRECT_URL must be a valid connection string",
-  ),
-  DATABASE_POOLED_URL: z.url(
-    "DATABASE_POOLED_URL must be a valid connection string",
-  ),
+  // SQLite is a local file, so this is a `file:` path, not a URL — `z.url()`
+  // would reject it. One var, not the boilerplate's pooled/direct pair: a file
+  // has no connection pooler to point a second URL at.
+  DATABASE_URL: z
+    .string()
+    .startsWith(
+      "file:",
+      "DATABASE_URL must be a SQLite file path, e.g. file:./prisma/dev.db",
+    )
+    .default("file:./prisma/dev.db"),
 
   NODE_ENV: z
     .enum(["development", "production", "test"])

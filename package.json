@@ -30,7 +30,7 @@
     "@ai-sdk/openai-compatible": "^3.0.6",
     "@base-ui/react": "^1.6.0",
     "@hookform/resolvers": "^5.4.0",
-    "@prisma/adapter-pg": "^7.8.0",
+    "@prisma/adapter-better-sqlite3": "^7.8.0",
     "@prisma/client": "^7.8.0",
     "ai": "^7.0.18",
     "babel-plugin-react-compiler": "^1.0.0",
@@ -43,7 +43,6 @@
     "motion-plus": "https://api.motion.dev/registry.tgz?package=motion-plus&version=2.12.0&token=507bb349d209f21fc1e6daaebc33c4a3f3a2cebe8b13e1ed6a9dea082655100d",
     "next": "16.2.10",
     "next-themes": "^0.4.6",
-    "pg": "^8.22.0",
     "pino": "^10.3.1",
     "react": "19.2.7",
     "react-dom": "19.2.7",
@@ -60,7 +59,6 @@
     "@kareem-aez/convit": "^0.2.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^26",
-    "@types/pg": "^8.20.0",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "eslint": "^9.39.4",
@@ -84,6 +82,7 @@
     "esbuild@0.28.0": true,
     "prisma@7.8.0": true,
     "sharp@0.34.5": true,
-    "unrs-resolver@1.12.2": true
+    "unrs-resolver@1.12.2": true,
+    "better-sqlite3@12.11.1": true
   }
 }

@@ -5,7 +5,8 @@ import { defineConfig, env } from "prisma/config";
 
 export default defineConfig({
   datasource: {
-    // Direct connection required for migrations — never use the pooler URL here
-    url: env("DATABASE_DIRECT_URL"),
+    // Relative `file:` paths here resolve from the project root, same as the
+    // runtime adapter's cwd — so migrations and the app hit the same file.
+    url: env("DATABASE_URL"),
   },
 });

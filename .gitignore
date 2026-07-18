@@ -57,6 +57,12 @@ next-env.d.ts
 # Prisma generated client (should be committed if checking in migrations)
 # /src/generated/prisma
 
+# Local SQLite database — rebuilt from migrations + seed, never committed
+/prisma/*.db
+/prisma/*.db-journal
+/prisma/*.db-wal
+/prisma/*.db-shm
+
 # =============================================================================
 # Test & Coverage
 # =============================================================================

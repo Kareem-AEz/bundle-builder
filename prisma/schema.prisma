@@ -10,78 +10,40 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
 }
 
-// ==================================================
-// Better Auth Models
-// ==================================================
-model User {
-  id            String    @id
-  name          String
-  email         String
-  emailVerified Boolean   @default(false)
-  image         String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  sessions      Session[]
-  accounts      Account[]
-
-  role       String?
-  banned     Boolean?  @default(false)
-  banReason  String?
-  banExpires DateTime?
-
-  @@unique([email])
-  @@map("user")
+model Category {
+  id           String    @id // "cameras"
+  step         Int
+  stepTitle    String
+  singleSelect Boolean   @default(false)
+  reviewLabel  String
+  reviewOrder  Int
+  products     Product[]
 }
 
-model Session {
-  id        String   @id
-  expiresAt DateTime
-  token     String
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  ipAddress String?
-  userAgent String?
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  impersonatedBy String?
-
-  @@unique([token])
-  @@index([userId])
-  @@map("session")
+model Product {
+  id         String    @id
+  title      String
+  tagline    String
+  image      String?
+  price      Int // cents, never float
+  compareAt  Int?
+  unit       String? // "month" | null — SQLite has no enums
+  required   Boolean   @default(false)
+  max        Int?
+  sortOrder  Int // array position in catalog.ts; rows come back unordered without it
+  categoryId String
+  category   Category  @relation(fields: [categoryId], references: [id])
+  variants   Variant[]
 }
 
-model Account {
-  id                    String    @id
-  accountId             String
-  providerId            String
-  userId                String
-  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
-  accessToken           String?
-  refreshToken          String?
-  idToken               String?
-  accessTokenExpiresAt  DateTime?
-  refreshTokenExpiresAt DateTime?
-  scope                 String?
-  password              String?
-  createdAt             DateTime  @default(now())
-  updatedAt             DateTime  @updatedAt
-
-  @@index([userId])
-  @@map("account")
-}
-
-model Verification {
-  id         String   @id
-  identifier String
-  value      String
-  expiresAt  DateTime
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-
-  @@index([identifier])
-  @@map("verification")
+model Variant {
+  id        String  @id // the quantity key — must match catalog.ts byte for byte
+  label     String
+  swatch    String
+  sortOrder Int
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
 }
