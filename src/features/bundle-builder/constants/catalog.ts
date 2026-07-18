@@ -42,12 +42,12 @@ export const cameras: Category = {
       title: "Wyze Cam Floodlight v2",
       tagline:
         "2K floodlight camera with a 160° wide-angle view for your garage.",
-      image: PATHS.product("wyze-cam-floodlight-v2.png"),
+      image: PATHS.product("wyze-cam-floodlight-v2-white.png"),
       price: 6998,
       compareAt: 8998, // => save 22%
       // prettier-ignore
       variants: [
-        { id: "cam-floodlight-v2-white", label: "White", swatch: PATHS.product("wyze-cam-floodlight-v2.png") },
+        { id: "cam-floodlight-v2-white", label: "White", swatch: PATHS.product("wyze-cam-floodlight-v2-white.png") },
         { id: "cam-floodlight-v2-black", label: "Black", swatch: PATHS.product("wyze-cam-floodlight-v2-black.png") },
       ],
     },

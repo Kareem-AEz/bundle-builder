@@ -55,10 +55,10 @@ export const BUNDLE_BUILDER_ASSETS = {
     usedIn: "Cameras step: Wyze Cam Pan v3 card, 'Black' color swatch",
   },
   camFloodlightV2: {
-    src: "/assets/bundle-builder/products/wyze-cam-floodlight-v2.png",
-    alt: "Wyze Cam Floodlight v2",
+    src: "/assets/bundle-builder/products/wyze-cam-floodlight-v2-white.png",
+    alt: "Wyze Cam Floodlight v2, white",
     usedIn:
-      "Cameras step: Wyze Cam Floodlight v2 card photo; the design reuses it for the 'White' color swatch",
+      "Cameras step: Wyze Cam Floodlight v2 card photo and the 'White' color swatch",
   },
   camFloodlightV2Black: {
     src: "/assets/bundle-builder/products/wyze-cam-floodlight-v2-black.png",
