@@ -12,3 +12,5 @@ kind a reviewer would (rightly) question. Each follows _Context · Decision · C
 | [0005](0005-serializable-catalog.md) | Catalog is serializable data; icons resolved in the UI          |
 | [0006](0006-persistence.md)          | Explicit localStorage save/hydrate; no `persist` middleware     |
 | [0007](0007-inferred-steps.md)       | Steps 2–4 and the Free tier are inferred; mock inconsistencies  |
+| [0008](0008-ui-primitives.md)        | Base UI for behavior, hand-rolled Tailwind for pixels           |
+| [0009](0009-design-tokens.md)        | Manrope, OKLCH, rem units, spacing snapped to the Tailwind scale |

@@ -1,12 +1,15 @@
 import "./globals.css";
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist_Mono, Manrope } from "next/font/google";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { siteConfig } from "@/config/site";
 import { env } from "@/lib/env";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+// Manrope: closest free variable-font substitute for the design's Gilroy. One file,
+// all weights (200-800). No true italic — the browser synthesizes it for the lone
+// italic use ("Save my system for later"). Documented deviation, see README.
+const manrope = Manrope({
+  variable: "--font-manrope",
   subsets: ["latin"],
 });
 
@@ -28,9 +31,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
+      <body className={`${manrope.variable} ${geistMono.variable} antialiased`}>
         <TooltipProvider delay={300}>{children}</TooltipProvider>
       </body>
     </html>

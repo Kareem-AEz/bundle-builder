@@ -31,7 +31,7 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
+  --font-sans: var(--font-manrope);
   --font-mono: var(--font-geist-mono);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
@@ -71,13 +71,48 @@
   --radius-4xl: calc(var(--radius) + 16px);
 }
 
+/* ── Wyze design tokens (from Figma; full spec in reference.local/DESIGN-TOKENS.md) ──
+   Single light theme, no dark variants. Colors are the exact Figma hex. Radii stay in
+   px on purpose (visual, not text-scaled); type/spacing scale in rem via Tailwind. */
+@theme {
+  /* Brand + surfaces. OKLCH for uniformity with the shadcn tokens; source Figma hex
+     kept in comments for design diffing. All in-gamut sRGB (no P3 fallback needed). */
+  --color-brand: oklch(0.462 0.23 281.164); /* #4e2fd2 — prices, badges, FREE, Checkout, selected */
+  --color-surface: oklch(0.965 0.017 259.418); /* #edf4ff — builder step + review panel bg */
+  --color-success: oklch(0.637 0.118 175.67); /* #0aa288 — savings text, selected variant-chip border */
+  --color-sale: oklch(0.585 0.198 29.435); /* #d8392b — builder-card strikethrough (red) */
+
+  /* Text inks (dark → light) */
+  --color-ink: oklch(0.158 0.007 258.372); /* #0b0d10 — item names, stepper values */
+  --color-title: oklch(0.239 0 0); /* #1f1f1f — card titles, panel heading */
+  --color-kicker: oklch(0.402 0 0); /* #484848 — step kicker, "Save my system for later" */
+  --color-ink-muted: oklch(0.457 0 0); /* #575757 — builder active price, single-price cards */
+  --color-faint: oklch(0.569 0.019 250.966); /* #6f7882 — review strikethrough + total strike */
+  --color-label: oklch(0.759 0.019 250.641); /* #a8b2bd — review section labels */
+
+  /* Lines + control fills */
+  --color-line: oklch(0.872 0.014 247.989); /* #ced6de — dividers, disabled control borders */
+  --color-control: oklch(0.965 0.006 239.82); /* #f0f4f7 — stepper plus-btn fill */
+  --color-control-line: oklch(0.938 0.009 247.918); /* #e6ebf0 — enabled minus-btn border */
+
+  /* Radii — rem (÷16, Tailwind-style) so they scale with root font-size */
+  --radius-chip: 0.125rem; /* 2px */
+  --radius-badge: 0.1875rem; /* 3px */
+  --radius-control: 0.25rem; /* 4px */
+  --radius-thumb: 0.3125rem; /* 5px */
+  --radius-btn: 0.4375rem; /* 7px */
+  --radius-card: 0.625rem; /* 10px */
+}
+
 :root {
   --radius: 0.625rem;
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
+  /* Wyze shim: point the shadcn vars the vendored ui/* components read at the brand,
+     so Button etc. inherit it without a rewrite. Sale red stays out of --destructive. */
+  --primary: var(--color-brand);
   --primary-foreground: oklch(0.985 0 0);
   --secondary: oklch(0.97 0 0);
   --secondary-foreground: oklch(0.205 0 0);
@@ -88,7 +123,7 @@
   --destructive: oklch(0.577 0.245 27.325);
   --border: oklch(0.922 0 0);
   --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
+  --ring: var(--color-brand);
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
@@ -145,7 +180,7 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground font-sans;
   }
 }
 
