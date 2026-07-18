@@ -20,8 +20,6 @@
     "type:check": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test": "vitest run",
-    "test:watch": "vitest",
     "db:seed": "tsx prisma/seed.ts",
     "db:generate": "npx prisma generate",
     "db:migrate": "npx prisma migrate dev",

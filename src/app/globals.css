@@ -15,6 +15,24 @@
     text-wrap: pretty;
   }
 
+  /* Grows a control's *interactive* area without touching its visual size. The design's
+     stepper buttons are 20px, well under the WCAG 2.5.8 24px minimum; this keeps the
+     20px look and hands the pointer a 44x32 target. Height is capped at 32 (not 44) so
+     the overlay stays inside the card's 10px row gap and can't swallow clicks meant for
+     the variant chips above. Parent must not clip overflow. */
+  .tap-target {
+    position: relative;
+  }
+  .tap-target::after {
+    content: "";
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: max(100%, 44px);
+    height: max(100%, 32px);
+    transform: translate(-50%, -50%);
+  }
+
   .visually-hidden {
     position: absolute;
     width: 1px;
@@ -77,23 +95,45 @@
 @theme {
   /* Brand + surfaces. OKLCH for uniformity with the shadcn tokens; source Figma hex
      kept in comments for design diffing. All in-gamut sRGB (no P3 fallback needed). */
-  --color-brand: oklch(0.462 0.23 281.164); /* #4e2fd2 — prices, badges, FREE, Checkout, selected */
-  --color-surface: oklch(0.965 0.017 259.418); /* #edf4ff — builder step + review panel bg */
-  --color-success: oklch(0.637 0.118 175.67); /* #0aa288 — savings text, selected variant-chip border */
-  --color-sale: oklch(0.585 0.198 29.435); /* #d8392b — builder-card strikethrough (red) */
+  /* #4e2fd2 — prices, badges, FREE, Checkout, selected */
+  --color-brand: oklch(0.462 0.23 281.164);
+  /* #edf4ff — builder step + review panel bg */
+  --color-surface: oklch(0.965 0.017 259.418);
+  /* #0aa288 — savings text, selected variant-chip border */
+  --color-success: oklch(0.637 0.118 175.67);
+  /* #d8392b — builder-card strikethrough (red) */
+  --color-sale: oklch(0.585 0.198 29.435);
 
   /* Text inks (dark → light) */
-  --color-ink: oklch(0.158 0.007 258.372); /* #0b0d10 — item names, stepper values */
-  --color-title: oklch(0.239 0 0); /* #1f1f1f — card titles, panel heading */
-  --color-kicker: oklch(0.402 0 0); /* #484848 — step kicker, "Save my system for later" */
-  --color-ink-muted: oklch(0.457 0 0); /* #575757 — builder active price, single-price cards */
-  --color-faint: oklch(0.569 0.019 250.966); /* #6f7882 — review strikethrough + total strike */
-  --color-label: oklch(0.759 0.019 250.641); /* #a8b2bd — review section labels */
+  /* #0b0d10 — item names, stepper values */
+  --color-ink: oklch(0.158 0.007 258.372);
+  /* #1f1f1f — card titles, panel heading */
+  --color-title: oklch(0.239 0 0);
+  /* #484848 — step kicker, "Save my system for later" */
+  --color-kicker: oklch(0.402 0 0);
+  /* #575757 — builder active price, single-price cards */
+  --color-ink-muted: oklch(0.457 0 0);
+  /* #6f7882 — review strikethrough + total strike */
+  --color-faint: oklch(0.569 0.019 250.966);
+  /* #a8b2bd — review section labels */
+  --color-label: oklch(0.759 0.019 250.641);
+  /* #0000ee — "Learn More" */
+  --color-link: oklch(0.429 0.297 264.052);
+
+  /* Variant chips: the one place that isn't brand purple. Selected = success border on
+     a 4%-alpha mint wash; unselected = a plain hairline. */
+  /* rgba(29,240,187,.04) */
+  --color-chip-fill: oklch(0.868 0.166 173.5 / 0.04);
+  /* #cccccc */
+  --color-chip-line: oklch(0.848 0 0);
 
   /* Lines + control fills */
-  --color-line: oklch(0.872 0.014 247.989); /* #ced6de — dividers, disabled control borders */
-  --color-control: oklch(0.965 0.006 239.82); /* #f0f4f7 — stepper plus-btn fill */
-  --color-control-line: oklch(0.938 0.009 247.918); /* #e6ebf0 — enabled minus-btn border */
+  /* #ced6de — dividers, disabled control borders */
+  --color-line: oklch(0.872 0.014 247.989);
+  /* #f0f4f7 — stepper plus-btn fill */
+  --color-control: oklch(0.965 0.006 239.82);
+  /* #e6ebf0 — enabled minus-btn border */
+  --color-control-line: oklch(0.938 0.009 247.918);
 
   /* Radii — rem (÷16, Tailwind-style) so they scale with root font-size */
   --radius-chip: 0.125rem; /* 2px */
