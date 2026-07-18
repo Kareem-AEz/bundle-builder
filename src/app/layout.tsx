@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 import { Geist_Mono, Manrope } from "next/font/google";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { siteConfig } from "@/config/site";
+import { PREPAINT_SCRIPT } from "@/features/bundle-builder/lib/persistence";
 import { env } from "@/lib/env";
 
 // Manrope: closest free variable-font substitute for the design's Gilroy. One file,
@@ -30,8 +31,13 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    // The pre-paint script sets an attribute on <html>, which React would otherwise
+    // flag as a server/client attribute mismatch during hydration.
+    <html lang="en" suppressHydrationWarning>
       <body className={`${manrope.variable} ${geistMono.variable} antialiased`}>
+        {/* First thing in <body> so it runs before the builder markup is even parsed.
+            See lib/persistence for what it does and why it can't live in React. */}
+        <script dangerouslySetInnerHTML={{ __html: PREPAINT_SCRIPT }} />
         <TooltipProvider delay={300}>{children}</TooltipProvider>
       </body>
     </html>

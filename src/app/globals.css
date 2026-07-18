@@ -33,6 +33,17 @@
     transform: translate(-50%, -50%);
   }
 
+  /* Set before first paint by the layout's inline script, only when a saved bundle
+     exists, and removed once the store has restored it. The seed markup underneath still
+     occupies its full space, so revealing the restored bundle shifts nothing — this hides
+     wrong numbers, it does not collapse the layout.
+
+     Visibility, not display: the builder keeps its box, so there is no reflow either way.
+     First-time visitors never match this rule and see the server-rendered page instantly. */
+  [data-restoring] [data-bundle-root] {
+    visibility: hidden;
+  }
+
   .visually-hidden {
     position: absolute;
     width: 1px;

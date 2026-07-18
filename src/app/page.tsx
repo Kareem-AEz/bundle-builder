@@ -1,9 +1,9 @@
-import { BuilderAccordion } from "@/features/bundle-builder/components/accordion/builder-accordion";
+import { BundleBuilder } from "@/features/bundle-builder/components/bundle-builder";
 
 export default function Home() {
   return (
-    <main className="mx-auto w-[768px] py-10">
-      <BuilderAccordion />
+    <main className="mx-auto w-fit py-10">
+      <BundleBuilder />
     </main>
   );
 }

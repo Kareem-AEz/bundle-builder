@@ -111,6 +111,7 @@ export function ProductCard({
             onIncrement={() => increment(activeVariantId)}
             onDecrement={() => decrement(activeVariantId)}
             minusDisabled={qty === 0 || (product.required === true && qty <= 1)}
+            plusDisabled={product.max !== undefined && qty >= product.max}
           />
           <Price
             tone="card"

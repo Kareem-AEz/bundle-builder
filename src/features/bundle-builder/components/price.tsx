@@ -15,7 +15,10 @@ const priceRoot = cva("flex flex-col items-end gap-[3px] tracking-[0.6px]", {
   variants: {
     tone: {
       card: "text-base leading-5",
-      review: "text-sm leading-4",
+      // Fixed floor + tabular figures keep the review rows on a shared column grid: the
+      // stepper stops sliding left as a price gets wider, and digits don't jitter as
+      // counts change. Only overflows past ~$999.99, which no realistic cart reaches.
+      review: "min-w-[76px] text-sm leading-4 tabular-nums",
     },
   },
   defaultVariants: { tone: "card" },

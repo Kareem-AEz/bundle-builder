@@ -64,9 +64,10 @@ type QuantityStepperProps = VariantProps<typeof stepperRoot> & {
   label: string;
   onIncrement: () => void;
   onDecrement: () => void;
-  /** True at qty 0, and on the required Hub which clamps at 1. Only minus ever locks —
-   *  there is no ceiling on any product, the Hub included. */
+  /** True at qty 0, and on the required Hub which clamps at 1. */
   minusDisabled?: boolean;
+  /** True once a capped product is at its ceiling. Only the Hub sets one today. */
+  plusDisabled?: boolean;
   className?: string;
 };
 
@@ -76,6 +77,7 @@ export function QuantityStepper({
   onIncrement,
   onDecrement,
   minusDisabled = false,
+  plusDisabled = false,
   tone,
   className,
 }: QuantityStepperProps) {
@@ -111,8 +113,15 @@ export function QuantityStepper({
       <button
         type="button"
         onClick={onIncrement}
-        aria-label={`Increase quantity of ${label}`}
-        className={stepperButton({ disabled: false, tone })}
+        disabled={plusDisabled}
+        // Same treatment as the required minus: a dead control with no stated reason
+        // reads as broken, so the label carries the why.
+        aria-label={
+          plusDisabled
+            ? `${label} is limited to ${value} per system`
+            : `Increase quantity of ${label}`
+        }
+        className={stepperButton({ disabled: plusDisabled, tone })}
       >
         <PlusIcon />
       </button>
