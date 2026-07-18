@@ -1,7 +1,7 @@
 "use client";
 
 import { selectReviewGroups } from "../../selectors";
-import { useBundleStore } from "../../store/useBundleStore";
+import { useBundleStore, useCatalog } from "../../store/bundle-store-provider";
 import { FastShippingRow } from "./fast-shipping-row";
 import { ReviewSection } from "./review-section";
 import { ReviewSummary } from "./review-summary";
@@ -13,7 +13,8 @@ import { ReviewSummary } from "./review-summary";
  */
 export function ReviewPanel() {
   const quantities = useBundleStore((s) => s.quantities);
-  const groups = selectReviewGroups(quantities);
+  const catalog = useCatalog();
+  const groups = selectReviewGroups(quantities, catalog);
 
   return (
     <aside

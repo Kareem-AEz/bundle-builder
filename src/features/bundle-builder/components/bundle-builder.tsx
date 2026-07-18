@@ -2,7 +2,7 @@
 
 import { useEffect, useLayoutEffect } from "react";
 import { RESTORING_ATTR } from "../lib/persistence";
-import { useBundleStore } from "../store/useBundleStore";
+import { useBundleStore } from "../store/bundle-store-provider";
 import { BuilderAccordion } from "./accordion/builder-accordion";
 import { ReviewPanel } from "./review/review-panel";
 

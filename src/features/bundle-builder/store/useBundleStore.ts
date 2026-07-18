@@ -1,39 +1,11 @@
-import { create } from "zustand";
-import { CATALOG, plan } from "../constants/catalog";
+import { createStore } from "zustand/vanilla";
 // Shared with the layout's pre-paint script, which checks the same slot. Two copies of
 // the key could drift and leave the script looking in the wrong place.
 import { STORAGE_KEY } from "../lib/persistence";
-
-//  Computed once at load: ["cam-unlimited", "free-plan"]. selectPlan needs to know every plan option.
-const PLAN_VARIANTS_IDS = plan.products.flatMap((p) =>
-  p.variants.map((v) => v.id),
-);
-
-// variantId -> ceiling, for the few products that declare one. Built once at load, like
-// PLAN_VARIANTS_IDS above. Products with no `max` are simply absent, so a lookup miss
-// means "no limit" and no sentinel value is needed.
-const MAX_BY_VARIANT = new Map<string, number>(
-  CATALOG.flatMap((category) =>
-    category.products.flatMap((product) =>
-      product.max === undefined
-        ? []
-        : product.variants.map((v) => [v.id, product.max!] as const),
-    ),
-  ),
-);
-
-/**
- * Floor at 0, ceiling from the catalog. Every write to `quantities` goes through this,
- * including the one in `hydrate` — the UI disables the plus button at the ceiling, but a
- * hand-edited localStorage payload never touched that button. Enforcing it here is the
- * same reason you validate on the server and not only in the form.
- */
-function clampQty(variantId: string, qty: number): number {
-  return Math.min(Math.max(0, qty), MAX_BY_VARIANT.get(variantId) ?? Infinity);
-}
+import type { Catalog } from "../types";
 
 //  State = the 3 canonical fields. Everything else is derived later via selectors.
-type BuilderState = {
+export type BuilderState = {
   quantities: Record<string, number>; // variantId -> qry. Sparse: a missing key means 0.
   activeVariant: Record<string, string>; // productId -> variantId. sparse: missing means variants[0]
   openStep: number | null; // the one open accordion step (1..4); null = all closed.
@@ -45,7 +17,7 @@ type BuilderState = {
   savedSignature: string | null;
 };
 
-type BuilderActions = {
+export type BuilderActions = {
   setQuantity: (variantId: string, qty: number) => void;
   increment: (varintId: string) => void;
   decrement: (varintId: string) => void;
@@ -73,8 +45,35 @@ const SEED: BuilderState = {
   savedSignature: null,
 };
 
-export const useBundleStore = create<BuilderState & BuilderActions>()(
-  (set, get) => ({
+export function createBundleStore(catalog: Catalog) {
+  const planCategory = catalog.find((c) => c.id === "plan");
+  const PLAN_VARIANTS_IDS =
+    planCategory?.products.flatMap((p) => p.variants.map((v) => v.id)) ?? [];
+
+  const MAX_BY_VARIANT = new Map<string, number>(
+    catalog.flatMap((category) =>
+      category.products.flatMap((product) =>
+        product.max === undefined
+          ? []
+          : product.variants.map((v) => [v.id, product.max!] as const),
+      ),
+    ),
+  );
+
+  /**
+   * Floor at 0, ceiling from the catalog. Every write to `quantities` goes through this,
+   * including the one in `hydrate` — the UI disables the plus button at the ceiling, but a
+   * hand-edited localStorage payload never touched that button. Enforcing it here is the
+   * same reason you validate on the server and not only in the form.
+   */
+  function clampQty(variantId: string, qty: number): number {
+    return Math.min(
+      Math.max(0, qty),
+      MAX_BY_VARIANT.get(variantId) ?? Infinity,
+    );
+  }
+
+  return createStore<BuilderState & BuilderActions>()((set, get) => ({
     ...SEED,
 
     // Object spread on quantities = the immutable nested update. clampQty owns both ends.
@@ -165,7 +164,10 @@ export const useBundleStore = create<BuilderState & BuilderActions>()(
         const restored = data.quantities ?? {};
         set({
           quantities: Object.fromEntries(
-            Object.entries(restored).map(([id, qty]) => [id, clampQty(id, qty)]),
+            Object.entries(restored).map(([id, qty]) => [
+              id,
+              clampQty(id, qty),
+            ]),
           ),
           activeVariant: data.activeVariant ?? {},
           // The signature is what was actually stored, so a restored bundle reads as
@@ -180,5 +182,8 @@ export const useBundleStore = create<BuilderState & BuilderActions>()(
         set({ hydrated: true });
       }
     },
-  }),
-);
+  }));
+}
+
+/** The store instance a provider holds. One per provider, not one per module. */
+export type BundleStore = ReturnType<typeof createBundleStore>;

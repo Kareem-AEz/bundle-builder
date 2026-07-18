@@ -3,7 +3,7 @@
 import { Accordion } from "@base-ui/react/accordion";
 import { useMemo } from "react";
 import { selectStepCount } from "../../selectors";
-import { useBundleStore } from "../../store/useBundleStore";
+import { useBundleStore } from "../../store/bundle-store-provider";
 import type { Category, CategoryId } from "../../types";
 import {
   CameraIcon,

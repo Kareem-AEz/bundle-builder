@@ -16,7 +16,9 @@ function rowsFrom(catalog: Catalog) {
   const basename = (path: string) => path.slice(path.lastIndexOf("/") + 1);
 
   return catalog.map((category) => ({
-    id: category.id,
+    // `string`, not `CategoryId` — rows really do come back as TEXT, and the
+    // bad-id test below depends on being able to write one the union forbids.
+    id: category.id as string,
     step: category.step,
     stepTitle: category.stepTitle,
     singleSelect: category.singleSelect ?? false,

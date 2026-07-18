@@ -1,6 +1,6 @@
 import type { Cents } from "../lib/money";
-import type { Category, CategoryId, Quantities } from "../types";
-import { REVIEW_ORDERED } from "./catalog-index";
+import type { Catalog, Category, CategoryId, Quantities } from "../types";
+import { reviewOrdered } from "./catalog-index";
 
 /**
  * One row in the review panel: a single added variant, flattened into a self-contained
@@ -56,43 +56,50 @@ export type ReviewGroup = {
  * the map is sparse — contributes nothing. Categories that end up with no rows are
  * dropped, so an empty step shows no heading.
  *
- * Pure: depends only on `quantities` and the static catalog. Memoize in the component
- * on the `quantities` reference, which changes iff a quantity changes.
+ * Pure: depends only on its two arguments. Memoize in the component on the `quantities`
+ * reference, which changes iff a quantity changes — the catalog is stable for the life
+ * of the page.
  *
  * @param quantities - variantId -> count, from the store.
+ * @param catalog - the catalog the page was rendered from.
  * @returns Non-empty groups, ready to render. Prices are in cents.
  */
-export function selectReviewGroups(quantities: Quantities): ReviewGroup[] {
-  return REVIEW_ORDERED.map((category) => ({
-    categoryId: category.id,
-    reviewLabel: category.reviewLabel,
-    lines: category.products.flatMap((product) =>
-      product.variants.flatMap((variant) => {
-        const qty = quantities[variant.id] ?? 0;
-        if (qty <= 0) return [];
-        return [
-          {
-            variantId: variant.id,
-            productId: product.id,
-            title: product.title,
-            variantLabel: variant.label,
-            image: variant.swatch || product.image,
-            unit: product.unit,
-            unitPrice: product.price,
-            compareAt: product.compareAt,
-            required: product.required,
-            max: product.max,
-            qty,
-            lineSubtotal: product.price * qty,
-            lineCompareAt:
-              product.compareAt === undefined
-                ? undefined
-                : product.compareAt * qty,
-          } satisfies ReviewLine,
-        ];
-      }),
-    ),
-  })).filter((group) => group.lines.length > 0);
+export function selectReviewGroups(
+  quantities: Quantities,
+  catalog: Catalog,
+): ReviewGroup[] {
+  return reviewOrdered(catalog)
+    .map((category) => ({
+      categoryId: category.id,
+      reviewLabel: category.reviewLabel,
+      lines: category.products.flatMap((product) =>
+        product.variants.flatMap((variant) => {
+          const qty = quantities[variant.id] ?? 0;
+          if (qty <= 0) return [];
+          return [
+            {
+              variantId: variant.id,
+              productId: product.id,
+              title: product.title,
+              variantLabel: variant.label,
+              image: variant.swatch || product.image,
+              unit: product.unit,
+              unitPrice: product.price,
+              compareAt: product.compareAt,
+              required: product.required,
+              max: product.max,
+              qty,
+              lineSubtotal: product.price * qty,
+              lineCompareAt:
+                product.compareAt === undefined
+                  ? undefined
+                  : product.compareAt * qty,
+            } satisfies ReviewLine,
+          ];
+        }),
+      ),
+    }))
+    .filter((group) => group.lines.length > 0);
 }
 
 /**

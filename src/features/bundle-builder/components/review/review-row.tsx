@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 import type { ReviewLine } from "../../selectors";
-import { useBundleStore } from "../../store/useBundleStore";
+import { useBundleStore } from "../../store/bundle-store-provider";
 import { Price } from "../price";
 import { QuantityStepper } from "../quantity-stepper";
 

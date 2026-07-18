@@ -2,7 +2,7 @@
 
 import { cn } from "@/lib/utils";
 import { selectBadge } from "../selectors";
-import { useBundleStore } from "../store/useBundleStore";
+import { useBundleStore } from "../store/bundle-store-provider";
 import type { Product } from "../types";
 import { Price } from "./price";
 import { SaveBadge } from "./save-badge";

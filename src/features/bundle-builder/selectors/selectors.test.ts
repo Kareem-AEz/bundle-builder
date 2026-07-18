@@ -1,7 +1,8 @@
-import { afterEach, describe, expect, it } from "vitest";
-import { cameras, plan, sensors } from "../constants/catalog";
-import { useBundleStore } from "../store/useBundleStore";
+import { beforeEach, describe, expect, it } from "vitest";
+import { cameras, CATALOG, plan, sensors } from "../constants/catalog";
+import { type BundleStore, createBundleStore } from "../store/useBundleStore";
 import type { Quantities } from "../types";
+import { buildCatalogIndex } from "./catalog-index";
 import {
   selectBadge,
   selectFinancingMonthly,
@@ -16,32 +17,36 @@ import {
   selectSubtotal,
 } from "./index";
 
-// The design-seeded boot state, read straight from the store. Asserting totals against
+// The selectors are pure over (state, catalog) now, so the tests build the index once
+// from the authored catalog — the same thing the provider builds at runtime.
+const INDEX = buildCatalogIndex(CATALOG);
+
+// The design-seeded boot state, read straight from a store. Asserting totals against
 // this (not a hand-copied map) means any catalog price change OR seed change fails loudly.
-const SEED = useBundleStore.getState().quantities;
+const SEED = createBundleStore(CATALOG).getState().quantities;
 
 describe("totals reproduce the design from the seed", () => {
   it("subtotal is $209.87", () => {
-    expect(selectSubtotal(SEED)).toBe(20987);
+    expect(selectSubtotal(SEED, INDEX)).toBe(20987);
   });
 
   it("pre-discount total is $260.79", () => {
-    expect(selectPreDiscountTotal(SEED)).toBe(26079);
+    expect(selectPreDiscountTotal(SEED, INDEX)).toBe(26079);
   });
 
   it("savings is $50.92 and equals pre-discount minus subtotal", () => {
-    expect(selectSavings(SEED)).toBe(5092);
-    expect(selectSavings(SEED)).toBe(
-      selectPreDiscountTotal(SEED) - selectSubtotal(SEED),
+    expect(selectSavings(SEED, INDEX)).toBe(5092);
+    expect(selectSavings(SEED, INDEX)).toBe(
+      selectPreDiscountTotal(SEED, INDEX) - selectSubtotal(SEED, INDEX),
     );
   });
 });
 
 describe("totals edge cases", () => {
   it("an empty cart is zero across the board", () => {
-    expect(selectSubtotal({})).toBe(0);
-    expect(selectPreDiscountTotal({})).toBe(0);
-    expect(selectSavings({})).toBe(0);
+    expect(selectSubtotal({}, INDEX)).toBe(0);
+    expect(selectPreDiscountTotal({}, INDEX)).toBe(0);
+    expect(selectSavings({}, INDEX)).toBe(0);
   });
 
   it("skips unknown ids and non-positive quantities", () => {
@@ -50,55 +55,55 @@ describe("totals edge cases", () => {
       "cam-v4-white": 0,
       "cam-v4-grey": -2,
     };
-    expect(selectSubtotal(q)).toBe(0);
-    expect(selectPreDiscountTotal(q)).toBe(0);
+    expect(selectSubtotal(q, INDEX)).toBe(0);
+    expect(selectPreDiscountTotal(q, INDEX)).toBe(0);
   });
 
   it("a product with no compareAt adds nothing to savings", () => {
     const q: Quantities = { "microsd-256gb": 2 }; // 2 x $20.98, never on sale
-    expect(selectSubtotal(q)).toBe(4196);
-    expect(selectPreDiscountTotal(q)).toBe(4196);
-    expect(selectSavings(q)).toBe(0);
+    expect(selectSubtotal(q, INDEX)).toBe(4196);
+    expect(selectPreDiscountTotal(q, INDEX)).toBe(4196);
+    expect(selectSavings(q, INDEX)).toBe(0);
   });
 
   it("the free Hub still contributes its compareAt to savings", () => {
     const q: Quantities = { "sense-hub": 1 }; // price 0, compareAt 2992
-    expect(selectSubtotal(q)).toBe(0);
-    expect(selectPreDiscountTotal(q)).toBe(2992);
-    expect(selectSavings(q)).toBe(2992);
+    expect(selectSubtotal(q, INDEX)).toBe(0);
+    expect(selectPreDiscountTotal(q, INDEX)).toBe(2992);
+    expect(selectSavings(q, INDEX)).toBe(2992);
   });
 });
 
 describe("one-time and recurring money stay separated", () => {
   it("splits the seed into $199.88 hardware and $9.99/mo", () => {
-    expect(selectHardwareSubtotal(SEED)).toBe(19988);
-    expect(selectMonthlySubtotal(SEED)).toBe(999);
+    expect(selectHardwareSubtotal(SEED, INDEX)).toBe(19988);
+    expect(selectMonthlySubtotal(SEED, INDEX)).toBe(999);
   });
 
   // The whole point of the split: a figure you'd finance or charge once must not have a
   // subscription folded into it. If someone later drops the `unit` guard, this fails.
   it("the two halves reconstruct the combined subtotal exactly", () => {
-    expect(selectHardwareSubtotal(SEED) + selectMonthlySubtotal(SEED)).toBe(
-      selectSubtotal(SEED),
-    );
+    expect(
+      selectHardwareSubtotal(SEED, INDEX) + selectMonthlySubtotal(SEED, INDEX),
+    ).toBe(selectSubtotal(SEED, INDEX));
   });
 
   it("a cart of nothing but the plan is all recurring, no hardware", () => {
     const q: Quantities = { "cam-unlimited": 1 };
-    expect(selectHardwareSubtotal(q)).toBe(0);
-    expect(selectMonthlySubtotal(q)).toBe(999);
+    expect(selectHardwareSubtotal(q, INDEX)).toBe(0);
+    expect(selectMonthlySubtotal(q, INDEX)).toBe(999);
   });
 
   it("a cart of nothing but hardware has no recurring charge", () => {
     const q: Quantities = { "microsd-256gb": 2 };
-    expect(selectHardwareSubtotal(q)).toBe(4196);
-    expect(selectMonthlySubtotal(q)).toBe(0);
+    expect(selectHardwareSubtotal(q, INDEX)).toBe(4196);
+    expect(selectMonthlySubtotal(q, INDEX)).toBe(0);
   });
 
   it("the $0 Free plan is still recurring, not hardware", () => {
     const q: Quantities = { "free-plan": 1 };
-    expect(selectHardwareSubtotal(q)).toBe(0);
-    expect(selectMonthlySubtotal(q)).toBe(0);
+    expect(selectHardwareSubtotal(q, INDEX)).toBe(0);
+    expect(selectMonthlySubtotal(q, INDEX)).toBe(0);
   });
 
   it("both skip unknown ids and non-positive quantities", () => {
@@ -107,8 +112,8 @@ describe("one-time and recurring money stay separated", () => {
       "cam-v4-white": 0,
       "cam-unlimited": -1,
     };
-    expect(selectHardwareSubtotal(q)).toBe(0);
-    expect(selectMonthlySubtotal(q)).toBe(0);
+    expect(selectHardwareSubtotal(q, INDEX)).toBe(0);
+    expect(selectMonthlySubtotal(q, INDEX)).toBe(0);
   });
 });
 
@@ -116,62 +121,65 @@ describe("one-time and recurring money stay separated", () => {
 // lock the three to a single base — mixing them is the bug ADR-0011 records.
 describe("the summary's figures share one base", () => {
   it("hardware pre-discount is $247.80 from the seed", () => {
-    expect(selectHardwarePreDiscountTotal(SEED)).toBe(24780);
+    expect(selectHardwarePreDiscountTotal(SEED, INDEX)).toBe(24780);
   });
 
   it("hardware savings is pre-discount minus subtotal, both hardware", () => {
-    expect(selectHardwareSavings(SEED)).toBe(4792);
-    expect(selectHardwareSavings(SEED)).toBe(
-      selectHardwarePreDiscountTotal(SEED) - selectHardwareSubtotal(SEED),
+    expect(selectHardwareSavings(SEED, INDEX)).toBe(4792);
+    expect(selectHardwareSavings(SEED, INDEX)).toBe(
+      selectHardwarePreDiscountTotal(SEED, INDEX) -
+        selectHardwareSubtotal(SEED, INDEX),
     );
   });
 
   it("excludes the plan from every hardware figure", () => {
     const hardware: Quantities = { "cam-v4-white": 1 };
     const withPlan: Quantities = { ...hardware, "cam-unlimited": 1 };
-    expect(selectHardwareSubtotal(withPlan)).toBe(
-      selectHardwareSubtotal(hardware),
+    expect(selectHardwareSubtotal(withPlan, INDEX)).toBe(
+      selectHardwareSubtotal(hardware, INDEX),
     );
-    expect(selectHardwarePreDiscountTotal(withPlan)).toBe(
-      selectHardwarePreDiscountTotal(hardware),
+    expect(selectHardwarePreDiscountTotal(withPlan, INDEX)).toBe(
+      selectHardwarePreDiscountTotal(hardware, INDEX),
     );
-    expect(selectHardwareSavings(withPlan)).toBe(
-      selectHardwareSavings(hardware),
+    expect(selectHardwareSavings(withPlan, INDEX)).toBe(
+      selectHardwareSavings(hardware, INDEX),
     );
   });
 
   // Whole-cart and hardware-only differ by exactly the plan. If this ever holds by
   // accident the split has collapsed and nobody would notice from the UI.
   it("the hardware split accounts for the whole cart", () => {
-    expect(selectHardwareSubtotal(SEED) + selectMonthlySubtotal(SEED)).toBe(
-      selectSubtotal(SEED),
+    expect(
+      selectHardwareSubtotal(SEED, INDEX) + selectMonthlySubtotal(SEED, INDEX),
+    ).toBe(selectSubtotal(SEED, INDEX));
+    expect(selectHardwareSubtotal(SEED, INDEX)).not.toBe(
+      selectSubtotal(SEED, INDEX),
     );
-    expect(selectHardwareSubtotal(SEED)).not.toBe(selectSubtotal(SEED));
   });
 });
 
 describe("selectFinancingMonthly", () => {
   it("spreads the seed's hardware over 12 months: $16.66", () => {
-    expect(selectFinancingMonthly(SEED)).toBe(1666);
+    expect(selectFinancingMonthly(SEED, INDEX)).toBe(1666);
   });
 
   it("excludes the plan, which already bills monthly", () => {
     const withPlan: Quantities = { "cam-v4-white": 1, "cam-unlimited": 1 };
     const withoutPlan: Quantities = { "cam-v4-white": 1 };
-    expect(selectFinancingMonthly(withPlan)).toBe(
-      selectFinancingMonthly(withoutPlan),
+    expect(selectFinancingMonthly(withPlan, INDEX)).toBe(
+      selectFinancingMonthly(withoutPlan, INDEX),
     );
   });
 
   // 19988 / 12 = 1665.67. Math.floor would render $16.65 and under-state the payment;
   // this is the assertion that fails if the rounding mode ever changes.
   it("rounds to the nearest cent, never down", () => {
-    expect(selectHardwareSubtotal(SEED)).toBe(19988);
-    expect(selectFinancingMonthly(SEED)).toBeGreaterThan(19988 / 12);
+    expect(selectHardwareSubtotal(SEED, INDEX)).toBe(19988);
+    expect(selectFinancingMonthly(SEED, INDEX)).toBeGreaterThan(19988 / 12);
   });
 
   it("an empty cart finances nothing", () => {
-    expect(selectFinancingMonthly({})).toBe(0);
+    expect(selectFinancingMonthly({}, INDEX)).toBe(0);
   });
 });
 
@@ -232,7 +240,7 @@ describe("selectStepCount", () => {
 });
 
 describe("selectReviewGroups from the seed", () => {
-  const groups = selectReviewGroups(SEED);
+  const groups = selectReviewGroups(SEED, CATALOG);
 
   it("orders sections by reviewOrder, so Plan shows last", () => {
     expect(groups.map((g) => g.reviewLabel)).toEqual([
@@ -312,7 +320,7 @@ describe("selectReviewGroups thumbnails", () => {
   it("uses the chosen variant's swatch when a product has colours", () => {
     const camV4 = cameras.products.find((p) => p.id === "cam-v4")!;
     const black = camV4.variants.find((v) => v.id === "cam-v4-black")!;
-    const [group] = selectReviewGroups({ "cam-v4-black": 1 });
+    const [group] = selectReviewGroups({ "cam-v4-black": 1 }, CATALOG);
     expect(group.lines[0].image).toBe(black.swatch);
     expect(group.lines[0].image).not.toBe(camV4.image);
   });
@@ -321,7 +329,7 @@ describe("selectReviewGroups thumbnails", () => {
   // leaving the row with an empty src.
   it("falls back to the product photo when the variant has no swatch", () => {
     const hub = sensors.products.find((p) => p.id === "sense-hub")!;
-    const [group] = selectReviewGroups({ "sense-hub": 1 });
+    const [group] = selectReviewGroups({ "sense-hub": 1 }, CATALOG);
     expect(group.lines[0].image).toBe(hub.image);
     expect(group.lines[0].image).toBeTruthy();
   });
@@ -329,10 +337,10 @@ describe("selectReviewGroups thumbnails", () => {
   // The plan's thumbnail is its brand mark, not a product shot, and it comes through the
   // same catalog field as everything else — no branch in the row knows what a plan is.
   it("gives the paid plan its brand mark and the free plan nothing", () => {
-    const [paid] = selectReviewGroups({ "cam-unlimited": 1 });
+    const [paid] = selectReviewGroups({ "cam-unlimited": 1 }, CATALOG);
     expect(paid.lines[0].image).toContain("cam-unlimited.svg");
 
-    const [free] = selectReviewGroups({ "free-plan": 1 });
+    const [free] = selectReviewGroups({ "free-plan": 1 }, CATALOG);
     expect(free.lines[0].image).toBeUndefined();
   });
 });
@@ -341,18 +349,23 @@ describe("selectReviewGroups thumbnails", () => {
 // 30 Hubs read as $897 saved on hardware nobody was ever going to buy. The cap is the fix,
 // and it lives in the store so a hand-edited payload can't route around it.
 describe("the Hub's quantity ceiling", () => {
-  const restore = useBundleStore.getState().quantities;
-  afterEach(() => useBundleStore.setState({ quantities: restore }));
+  // A fresh store per test, which the factory makes cheap. This replaces the old
+  // save-and-restore of a module singleton's state: isolation now comes from the
+  // store not being shared in the first place.
+  let store: BundleStore;
+  beforeEach(() => {
+    store = createBundleStore(CATALOG);
+  });
 
   it("refuses to increment past the max", () => {
-    const { increment } = useBundleStore.getState();
+    const { increment } = store.getState();
     for (let i = 0; i < 5; i++) increment("sense-hub");
-    expect(useBundleStore.getState().quantities["sense-hub"]).toBe(1);
+    expect(store.getState().quantities["sense-hub"]).toBe(1);
   });
 
   it("clamps a direct setQuantity", () => {
-    useBundleStore.getState().setQuantity("sense-hub", 30);
-    expect(useBundleStore.getState().quantities["sense-hub"]).toBe(1);
+    store.getState().setQuantity("sense-hub", 30);
+    expect(store.getState().quantities["sense-hub"]).toBe(1);
   });
 
   // `hydrate` runs the same clamp over a restored payload, but it needs localStorage and
@@ -360,36 +373,36 @@ describe("the Hub's quantity ceiling", () => {
   it("stops a capped product from inflating savings", () => {
     // What an unclamped 30 would produce: 30 x the Hub's $29.92 compareAt against a $0
     // price is pure fictional savings.
-    expect(selectHardwareSavings({ "sense-hub": 30 })).toBe(2992 * 30);
+    expect(selectHardwareSavings({ "sense-hub": 30 }, INDEX)).toBe(2992 * 30);
     // What the store actually accepts. Emptied first so the figure is the Hub's alone,
     // not the seed cart's cameras as well.
-    useBundleStore.setState({ quantities: {} });
-    useBundleStore.getState().setQuantity("sense-hub", 30);
-    expect(selectHardwareSavings(useBundleStore.getState().quantities)).toBe(
+    store.setState({ quantities: {} });
+    store.getState().setQuantity("sense-hub", 30);
+    expect(selectHardwareSavings(store.getState().quantities, INDEX)).toBe(
       2992,
     );
   });
 
   it("leaves uncapped products alone", () => {
-    const { increment } = useBundleStore.getState();
+    const { increment } = store.getState();
     for (let i = 0; i < 5; i++) increment("cam-v4-black");
-    expect(useBundleStore.getState().quantities["cam-v4-black"]).toBe(5);
+    expect(store.getState().quantities["cam-v4-black"]).toBe(5);
   });
 });
 
 describe("selectReviewGroups edge cases", () => {
   it("drops sections that have no selected lines", () => {
     const q: Quantities = { "microsd-256gb": 1 };
-    expect(selectReviewGroups(q).map((g) => g.reviewLabel)).toEqual([
+    expect(selectReviewGroups(q, CATALOG).map((g) => g.reviewLabel)).toEqual([
       "Accessories",
     ]);
   });
 
   it("an empty cart yields no sections", () => {
-    expect(selectReviewGroups({})).toEqual([]);
+    expect(selectReviewGroups({}, CATALOG)).toEqual([]);
   });
 
   it("unknown ids never surface as lines", () => {
-    expect(selectReviewGroups({ "ghost-id": 5 })).toEqual([]);
+    expect(selectReviewGroups({ "ghost-id": 5 }, CATALOG)).toEqual([]);
   });
 });

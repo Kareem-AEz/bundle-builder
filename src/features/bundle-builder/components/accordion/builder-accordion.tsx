@@ -1,13 +1,13 @@
 "use client";
 
 import { Accordion } from "@base-ui/react/accordion";
-import { CATALOG } from "../../constants/catalog";
-import { useBundleStore } from "../../store/useBundleStore";
+import { useBundleStore, useCatalog } from "../../store/bundle-store-provider";
 import { StepItem } from "./step-item";
 
 export function BuilderAccordion() {
   const openStep = useBundleStore((s) => s.openStep);
   const setOpenStep = useBundleStore((s) => s.setOpenStep);
+  const catalog = useCatalog();
 
   return (
     <Accordion.Root
@@ -17,11 +17,11 @@ export function BuilderAccordion() {
       onValueChange={(value) => setOpenStep(value[0] ?? null)}
       className="flex flex-col"
     >
-      {CATALOG.map((category, i) => (
+      {catalog.map((category, i) => (
         <StepItem
           key={category.id}
           category={category}
-          nextCategory={CATALOG[i + 1]}
+          nextCategory={catalog[i + 1]}
         />
       ))}
     </Accordion.Root>

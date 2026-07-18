@@ -11,7 +11,10 @@ import {
   selectHardwareSubtotal,
   selectMonthlySubtotal,
 } from "../../selectors";
-import { useBundleStore } from "../../store/useBundleStore";
+import {
+  useBundleStore,
+  useCatalogIndex,
+} from "../../store/bundle-store-provider";
 
 const SAVE_LABEL = {
   idle: "Save my system for later",
@@ -55,11 +58,12 @@ export function ReviewSummary() {
 
   // Every figure below reads off the same base: hardware. The plan is recurring, so it
   // gets its own line rather than being folded into a number labelled as a total.
-  const total = selectHardwareSubtotal(quantities);
-  const preDiscount = selectHardwarePreDiscountTotal(quantities);
-  const savings = selectHardwareSavings(quantities);
-  const monthly = selectMonthlySubtotal(quantities);
-  const financing = selectFinancingMonthly(quantities);
+  const index = useCatalogIndex();
+  const total = selectHardwareSubtotal(quantities, index);
+  const preDiscount = selectHardwarePreDiscountTotal(quantities, index);
+  const savings = selectHardwareSavings(quantities, index);
+  const monthly = selectMonthlySubtotal(quantities, index);
+  const financing = selectFinancingMonthly(quantities, index);
 
   return (
     <div className="flex flex-col gap-2 pt-4">

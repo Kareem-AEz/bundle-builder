@@ -1,6 +1,9 @@
 import type { Cents } from "../lib/money";
 import type { Product, Quantities } from "../types";
-import { CATALOG_INDEX } from "./catalog-index";
+import type { CatalogEntry } from "./catalog-index";
+
+/** variantId -> catalog entry, built once per store by the provider. */
+export type CatalogIndex = ReadonlyMap<string, CatalogEntry>;
 
 /**
  * The shape every cart sum shares: walk the added variants, skip unknown ids (e.g. stale
@@ -9,13 +12,14 @@ import { CATALOG_INDEX } from "./catalog-index";
  */
 function sumCart(
   quantities: Quantities,
+  index: CatalogIndex,
   amount: (product: Product) => Cents,
   include: (product: Product) => boolean = () => true,
 ): Cents {
   let total = 0;
   for (const [variantId, qty] of Object.entries(quantities)) {
     if (qty <= 0) continue;
-    const entry = CATALOG_INDEX.get(variantId);
+    const entry = index.get(variantId);
     if (!entry || !include(entry.product)) continue;
     total += amount(entry.product) * qty;
   }
@@ -35,8 +39,11 @@ const isRecurring = (p: Product) => p.unit !== undefined;
  * @param quantities - variantId -> count, from the store.
  * @returns Subtotal in cents. Seed -> 20987 ($209.87).
  */
-export function selectSubtotal(quantities: Quantities): Cents {
-  return sumCart(quantities, activePrice);
+export function selectSubtotal(
+  quantities: Quantities,
+  index: CatalogIndex,
+): Cents {
+  return sumCart(quantities, index, activePrice);
 }
 
 /**
@@ -45,8 +52,11 @@ export function selectSubtotal(quantities: Quantities): Cents {
  * @param quantities - variantId -> count, from the store.
  * @returns Pre-discount total in cents. Seed -> 26079 ($260.79).
  */
-export function selectPreDiscountTotal(quantities: Quantities): Cents {
-  return sumCart(quantities, originalPrice);
+export function selectPreDiscountTotal(
+  quantities: Quantities,
+  index: CatalogIndex,
+): Cents {
+  return sumCart(quantities, index, originalPrice);
 }
 
 /**
@@ -56,8 +66,14 @@ export function selectPreDiscountTotal(quantities: Quantities): Cents {
  * @param quantities - variantId -> count, from the store.
  * @returns Savings in cents. Seed -> 5092 ($50.92).
  */
-export function selectSavings(quantities: Quantities): Cents {
-  return selectPreDiscountTotal(quantities) - selectSubtotal(quantities);
+export function selectSavings(
+  quantities: Quantities,
+  index: CatalogIndex,
+): Cents {
+  return (
+    selectPreDiscountTotal(quantities, index) -
+    selectSubtotal(quantities, index)
+  );
 }
 
 /**
@@ -68,8 +84,11 @@ export function selectSavings(quantities: Quantities): Cents {
  * @param quantities - variantId -> count, from the store.
  * @returns Hardware subtotal in cents. Seed -> 19988 ($199.88).
  */
-export function selectHardwareSubtotal(quantities: Quantities): Cents {
-  return sumCart(quantities, activePrice, isHardware);
+export function selectHardwareSubtotal(
+  quantities: Quantities,
+  index: CatalogIndex,
+): Cents {
+  return sumCart(quantities, index, activePrice, isHardware);
 }
 
 /**
@@ -78,8 +97,11 @@ export function selectHardwareSubtotal(quantities: Quantities): Cents {
  * @param quantities - variantId -> count, from the store.
  * @returns Pre-discount hardware total in cents. Seed -> 24780 ($247.80).
  */
-export function selectHardwarePreDiscountTotal(quantities: Quantities): Cents {
-  return sumCart(quantities, originalPrice, isHardware);
+export function selectHardwarePreDiscountTotal(
+  quantities: Quantities,
+  index: CatalogIndex,
+): Cents {
+  return sumCart(quantities, index, originalPrice, isHardware);
 }
 
 /**
@@ -90,10 +112,13 @@ export function selectHardwarePreDiscountTotal(quantities: Quantities): Cents {
  * @param quantities - variantId -> count, from the store.
  * @returns Hardware savings in cents. Seed -> 4792 ($47.92).
  */
-export function selectHardwareSavings(quantities: Quantities): Cents {
+export function selectHardwareSavings(
+  quantities: Quantities,
+  index: CatalogIndex,
+): Cents {
   return (
-    selectHardwarePreDiscountTotal(quantities) -
-    selectHardwareSubtotal(quantities)
+    selectHardwarePreDiscountTotal(quantities, index) -
+    selectHardwareSubtotal(quantities, index)
   );
 }
 
@@ -104,8 +129,11 @@ export function selectHardwareSavings(quantities: Quantities): Cents {
  * @param quantities - variantId -> count, from the store.
  * @returns Monthly charge in cents. Seed -> 999 ($9.99/mo).
  */
-export function selectMonthlySubtotal(quantities: Quantities): Cents {
-  return sumCart(quantities, activePrice, isRecurring);
+export function selectMonthlySubtotal(
+  quantities: Quantities,
+  index: CatalogIndex,
+): Cents {
+  return sumCart(quantities, index, activePrice, isRecurring);
 }
 
 /**
@@ -115,6 +143,9 @@ export function selectMonthlySubtotal(quantities: Quantities): Cents {
  * The one division in the money layer, and it rounds. Math.floor would render $16.65 on
  * a $199.88 total and quietly under-state the payment.
  */
-export function selectFinancingMonthly(quantities: Quantities): Cents {
-  return Math.round(selectHardwareSubtotal(quantities) / 12);
+export function selectFinancingMonthly(
+  quantities: Quantities,
+  index: CatalogIndex,
+): Cents {
+  return Math.round(selectHardwareSubtotal(quantities, index) / 12);
 }
