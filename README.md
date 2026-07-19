@@ -16,15 +16,16 @@ Node 20+ (developed on 24). No accounts, no Docker, no services — the database
 
 ```bash
 npm install
-npm run db:migrate    # creates prisma/dev.db from the migration
-npm run db:seed       # loads the catalog into it
-npm run dev           # http://localhost:3000
+npm run setup    # db:migrate then db:seed
+npm run dev      # http://localhost:3000
 ```
 
 `.env` is optional; the defaults work as-is. Copy `.env.example` to `.env` if you want to point
-`DATABASE_URL` somewhere else. `db:migrate` has to run before `db:seed` — better-sqlite3 creates an
-empty file on connect, so seeding a fresh clone without migrating first fails with
-`TableDoesNotExist`.
+`DATABASE_URL` somewhere else.
+
+`setup` is just `npm run db:migrate && npm run db:seed`, in that order because it has to be:
+better-sqlite3 creates an empty file on connect, so seeding a fresh clone without migrating first
+fails with `TableDoesNotExist`. Run the two separately if you want to see them work.
 
 | Task             | Command                                       |
 | ---------------- | --------------------------------------------- |

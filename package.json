@@ -20,6 +20,7 @@
     "type:check": "tsc --noEmit",
     "test": "vitest run",
     "test:watch": "vitest",
+    "setup": "npm run db:migrate && npm run db:seed",
     "db:seed": "tsx prisma/seed.ts",
     "db:generate": "npx prisma generate",
     "db:migrate": "npx prisma migrate dev",
