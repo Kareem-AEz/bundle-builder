@@ -14,6 +14,16 @@ const isDev = process.env.NODE_ENV === "development";
 // exfiltration + injection hardening. 'unsafe-eval' is dev-only (React uses
 // eval for error stacks).
 //
+// upgrade-insecure-requests is prod-only for the same reason, but the failure
+// mode is worth spelling out: it rewrites every subresource to https://, and
+// the dev server is plain HTTP. On localhost nothing breaks, because localhost
+// is a "potentially trustworthy" origin the directive skips. Hit the dev server
+// from another device on the LAN (http://192.168.x.x:3000) and every CSS/JS/
+// image request gets upgraded to a port that speaks no TLS — the page renders
+// as unstyled HTML with broken images. The document itself survives, since a
+// response's own CSP can't upgrade the navigation that fetched it. In prod the
+// site is HTTPS, so the directive does its actual job.
+//
 // EXTENDING IT: you touch one directive per external dependency. The console
 // violation names the directive that complained (default-src is the fallback):
 //   • connect-src  → browser fetch/XHR/WebSocket to a cross-origin API (split
@@ -38,7 +48,7 @@ const cspHeader = `
   base-uri 'self';
   form-action 'self';
   frame-ancestors 'none';
-  upgrade-insecure-requests;
+  ${isDev ? "" : "upgrade-insecure-requests;"}
 `
   .replace(/\s{2,}/g, " ")
   .trim();
@@ -58,7 +68,7 @@ const nextConfig: NextConfig = {
   // http://192.168.x.x:3000)? Next blocks cross-origin dev requests by default;
   // list the origins you browse from here. Dev-only — has no effect on the
   // production build. Use the machine's LAN IP, not localhost.
-  // allowedDevOrigins: ["192.168.1.10"],
+  allowedDevOrigins: ["192.168.100.2"],
 
   async headers() {
     return [
