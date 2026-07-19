@@ -15,30 +15,16 @@ Base UI · Prisma 7 + SQLite · Vitest.
 Node 20+ (developed on 24). No accounts, no Docker, no services — the database is a local file.
 
 ```bash
-cp .env.example .env  # required before install — see below
 npm install
 npm run db:migrate    # creates prisma/dev.db from the migration
 npm run db:seed       # loads the catalog into it
 npm run dev           # http://localhost:3000
 ```
 
-The defaults in `.env.example` work as-is; nothing needs filling in.
-
-Two ordering constraints, both of which fail loudly if you skip them:
-
-- **`.env` must exist before `npm install`.** `postinstall` runs `prisma generate`, which loads
-  `prisma.config.ts`, which resolves `DATABASE_URL` from the environment. The app's own env schema
-  has a default, but Prisma's CLI doesn't read that schema, so install fails with
-  `Cannot resolve environment variable: DATABASE_URL`.
-- **`db:migrate` before `db:seed`.** better-sqlite3 creates an empty file on connect, so seeding a
-  fresh clone without migrating first fails with `TableDoesNotExist`.
-
-**Re-seeding while the dev server is running has no visible effect until you restart it.** The
-catalog is read through a `use cache` function with `cacheLife("max")` (see
-[How it's built](#how-its-built)), so the cache has no idea the database changed underneath it — it
-is keyed on the code, not on the data. Restart `npm run dev` after any `db:seed`. In an app that
-wrote to the catalog at runtime the proper lever would be `revalidateTag("catalog")`, which is why
-the query is tagged; this one only changes when someone edits `catalog.ts` and re-seeds.
+`.env` is optional; the defaults work as-is. Copy `.env.example` to `.env` if you want to point
+`DATABASE_URL` somewhere else. `db:migrate` has to run before `db:seed` — better-sqlite3 creates an
+empty file on connect, so seeding a fresh clone without migrating first fails with
+`TableDoesNotExist`.
 
 | Task             | Command                                       |
 | ---------------- | --------------------------------------------- |
@@ -48,37 +34,6 @@ the query is tagged; this one only changes when someone edits `catalog.ts` and r
 | Typecheck        | `npm run type:check`                          |
 | Lint / format    | `npm run lint:check` · `npm run format:check` |
 | Inspect the DB   | `npm run db:studio`                           |
-
----
-
-## What's implemented
-
-Everything in the brief, plus the optional backend.
-
-- **Accordion** — 4 steps, step 1 open on load, "N selected" counts **distinct products** (not
-  total quantity), `Next:` advances and scrolls the opened step to the top.
-- **Product cards** — optional discount badge, image, description, "Learn More", variant chips,
-  quantity stepper, compare-at + active price. Selected state (qty > 0) highlights the border.
-  Rendered from data; there is no per-product markup anywhere.
-- **Variant model** — every variant has its own quantity. The card's stepper is bound to the active
-  variant, so adding 2 White then switching to Black shows 0, and White ×2 stays in the review
-  panel as its own line.
-- **Review panel** — lines grouped by category in review order (Cameras → Sensors → Accessories →
-  Plan), each with a thumbnail, its own stepper, and pricing. Steppers are two-way bound: changing
-  either the card or the review line updates the other and every total.
-- **Money** — integer cents throughout, one `formatPrice()`, float math banned. Every displayed
-  figure is derived through a pure selector; nothing is hardcoded.
-- **Persistence** — "Save my system for later" writes to `localStorage`; a return visit restores
-  the exact configuration.
-- **Backend (the bonus)** — the catalog is served from SQLite via Prisma, read through a cached
-  server query. The page still prerenders as static.
-- **Responsive** — three layouts (mobile / tablet / desktop) matching the three design frames.
-- **Accessibility** — semantic HTML, `aria-expanded` on accordion headers, labelled steppers with
-  truthful disabled reasons, visible focus rings, keyboard-operable throughout, `aria-live` on the
-  save confirmation. Lighthouse accessibility **100**; two design tokens were darkened to get
-  there ([see below](#decisions--tradeoffs)).
-- **Motion** — pure CSS. The accordion animates `height` off a measured custom property; no
-  animation library. `prefers-reduced-motion` respected.
 
 ---
 
@@ -96,88 +51,54 @@ src/features/bundle-builder/
 └── components/            # accordion/, review/, cards, stepper, chips
 ```
 
-**State is minimal and everything else is derived.** The store holds only what can't be computed:
-variant quantities, the active variant per product, the open step, and two hydration flags.
-Review lines, "N selected" counts, subtotals, savings and the financing figure are all **pure
-selectors** over `(state, catalog)`. Two-way stepper sync falls out of this for free — both
-steppers write the same key and both read the same derivation, so there is no syncing code.
+State is minimal — variant quantities, the active variant per product, the open step — and
+everything else is derived through pure selectors over `(state, catalog)`. Two-way stepper sync
+between a card and its review line falls out of that for free; there is no syncing code.
 
-**The catalog is data, end to end.** `catalog.ts` is the authored source; the seed mirrors it into
-SQLite; a DTO maps rows back to the same `Catalog` type the selectors already consume. Tests assert
-the round trip, so the TS file and the database cannot silently disagree.
-
-**The database doesn't cost static rendering.** `getCatalog()` is a `use cache` function, so the
-query runs at build time and the route still reports `○ (Static)`. The catalog crosses to the client
-as serializable props, not a client-side fetch.
+Everything in the brief is implemented, plus the optional backend: the four-step accordion with
+distinct-product counts, per-variant quantities, the two-way-bound review panel, explicit save and
+restore, three responsive layouts matching the three design frames, pure-CSS motion with
+`prefers-reduced-motion` respected, and a catalog served from SQLite through a cached server query
+that keeps the route static. Lighthouse accessibility is 100.
 
 ---
 
 ## Decisions & tradeoffs
 
-Full reasoning for each lives in [`docs/adr/`](docs/adr/) — 16 short records of the non-obvious
-calls. The ones worth knowing:
+Full reasoning lives in [`docs/adr/`](docs/adr/) — 16 short records. The ones worth knowing:
 
-**Money in integer cents** ([0001](docs/adr/0001-money-in-cents.md)). `2798`, never `27.98`. One
-formatter at the render edge. The one division in the codebase (financing) rounds, because flooring
-would render `$16.65` on a `$199.88` total and understate the payment.
+**The mock's own arithmetic doesn't reconcile** ([0002](docs/adr/0002-compare-at-pricing.md),
+[0010](docs/adr/0010-one-time-vs-recurring.md)). The Cam Pan card reads `$34.98`/unit but its review
+line shows `$47.98` for ×2. I priced per-unit and let the totals follow, so every figure on screen
+reconciles with every other. The total also reads off hardware only, with the recurring plan on its
+own `plus $9.99/mo` line — a monthly charge folded into a number labelled "total" is what made an
+earlier version disagree with itself. Net: **$199.88** where the mock shows $187.89.
 
-**The summary reads off hardware only** ([0010](docs/adr/0010-one-time-vs-recurring.md), amended).
-Total, strike-through, savings and the financing chip all share one base — hardware — and the
-recurring plan renders as a separate `plus $9.99/mo` line. Mixing a monthly charge into a figure
-labelled as a total is what made an earlier version disagree with itself.
+**Money in integer cents** ([0001](docs/adr/0001-money-in-cents.md)). `2798`, never `27.98`, with
+one formatter at the render edge. The single division (financing) rounds rather than floors.
 
 **Products can declare a quantity ceiling** ([0012](docs/adr/0012-quantity-ceilings.md)). The Hub is
-`$0` with a `$29.92` compare-at, so every extra Hub minted fictional savings — 30 of them read as
-$897 saved. `max: 1` is the product's truth (one hub runs the system), enforced both in the UI and
-in the store's `clampQty`, because a disabled button can't defend a hand-edited `localStorage`
-payload.
+`$0` against a `$29.92` compare-at, so every extra Hub minted fictional savings. `max: 1` is
+enforced in the store's `clampQty`, not just the UI — a disabled button can't defend a hand-edited
+`localStorage` payload.
 
-**Explicit save, not `persist` middleware** ([0006](docs/adr/0006-persistence.md), amended).
-Design-seeded defaults render on the server and the saved bundle is restored client-side, so
-there's no hydration mismatch. An inline pre-paint script hides the subtree until the restore
-commits, which is what stops a returning visitor seeing the seed flash before their own bundle.
-
-**A per-request store factory behind context** ([0015](docs/adr/0015-store-factory-context.md)).
-Once the catalog arrives at request time, nothing can derive from it at module load. The store is
-built by `createBundleStore(catalog)` rather than a module singleton — specifically so `clampQty`
-exists before `hydrate()` can run, which closes a race where a tampered payload would restore
-unclamped.
+**Explicit save, not `persist` middleware** ([0006](docs/adr/0006-persistence.md), amended). Seeded
+defaults render on the server and the saved bundle restores client-side, so there's no hydration
+mismatch; a pre-paint script hides the subtree until the restore commits.
 
 **Two design tokens were darkened to pass WCAG AA**
-([0011 amendment](docs/adr/0011-stability-over-mock.md)). The design's greys and savings green fail
-contrast on the review panel's tinted surface — measured, not assumed:
-
-| Token             | Design    | Shipped   | On panel          | On white          |
-| ----------------- | --------- | --------- | ----------------- | ----------------- |
-| `--color-faint`   | `#6f7882` | `#5f6872` | 4.05 → **5.12:1** | 4.48 → **5.66:1** |
-| `--color-success` | `#0aa288` | `#007e66` | 2.90 → **4.55:1** | 3.20 → **5.03:1** |
-
-Hue and chroma are the design's; only lightness moves. The first is imperceptible at 12–14px; the
-second is visible, and was taken knowingly — the savings figure is content (it appears nowhere else
-in the summary), and `#0aa288` fails even WCAG's relaxed 3:1 large-text threshold. Where pixel
-fidelity and accessibility conflict, accessibility wins. Disabled controls are left low-contrast on
-purpose: WCAG 1.4.3 exempts them.
-
-**Deliberate deviations from the mock** ([0011](docs/adr/0011-stability-over-mock.md),
-[0016](docs/adr/0016-responsive-breakpoints.md)). The design's three frames disagree with each
-other in places; where they do, the records say which one won and why. Notably the tablet frame
-packs 5 cards into a row that would be ~150px wide, so the grid packs as many ~240px portrait cards
-as fit instead.
+([0011 amendment](docs/adr/0011-stability-over-mock.md)). Measured, not assumed: `--color-faint`
+`#6f7882` → `#5f6872` and `--color-success` `#0aa288` → `#007e66`. Hue and chroma are the design's;
+only lightness moves. Where fidelity and accessibility conflict, accessibility wins.
 
 ---
 
 ## Testing
 
-53 tests (Vitest), covering the money layer and the DTO round trip:
+53 tests (Vitest), covering the money layer and the DTO round trip.
 
-```bash
-npm test
-```
-
-They deliberately require **no database** — the DTO tests rebuild the rows the seed would write —
-so the suite passes on a clean clone before you've run a migration. Totals are asserted against the
-seed state read from the store rather than hand-copied numbers, so a catalog price change or a seed
-change fails loudly instead of silently drifting.
+They deliberately require **no database** — the DTO tests rebuild the rows the seed would write — so
+the suite passes on a clean clone before you've run a migration.
 
 ---
 
@@ -189,12 +110,11 @@ Honest list of what isn't done:
 - **"Learn More" anchors to its own card.** There are no product pages in scope, so it points
   somewhere real rather than dangling on `href="#"`.
 - **One unresolved fidelity question.** The gap between the stepper and the price on product cards:
-  the design tokens and the frame disagree, and settling it needs a Figma measurement I ran out of
-  API budget for. Currently `justify-between` — exact on Cam v4, up to ~18px off elsewhere.
+  the frame and the design tokens disagree, and I didn't settle which is authoritative. Currently
+  `justify-between` — exact on Cam v4, up to ~18px off elsewhere.
 - **The white Floodlight asset is lower-resolution** than its siblings (~166px of real detail vs
   713px). Invisible at the card's render size, marginally soft at 3× density.
 - **No E2E tests.** The interaction paths (restore-from-storage, the clamp, two-way stepper sync)
-  were verified by driving the browser rather than automated. Unit tests cover the arithmetic
-  underneath them.
+  were verified by driving the browser rather than automated.
 - **`db:migrate` is `prisma migrate dev`**, the authoring command. A deployment would want
   `migrate deploy`.
