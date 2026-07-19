@@ -36,8 +36,7 @@ export function ReviewRow({
             // Next's optimizer rejects SVG unless dangerouslyAllowSVG is on globally. These assets
             // are first-party and checked in, so serving the file as-is beats loosening the config.
             unoptimized={line.image.endsWith(".svg")}
-            // The thumb is the only thing naming the chosen colour, so it can't be
-            // decorative here. Single-variant products have no label and stay alt="".
+            // Single-variant products have no label and stay alt="".
             alt={line.variantLabel && `${line.title}, ${line.variantLabel}`}
             width={41}
             height={41}
@@ -46,6 +45,17 @@ export function ReviewRow({
         )}
         <p className="text-ink text-sm leading-4 font-medium tracking-[0.07px]">
           {line.title}
+          {line.variantLabel && (
+            // Hidden from assistive tech only when the thumb is there to carry the colour
+            // in its alt; without a thumb this text is the sole mention, so it stays read.
+            <span
+              className="text-ink-muted"
+              aria-hidden={line.image ? true : undefined}
+            >
+              {" · "}
+              {line.variantLabel}
+            </span>
+          )}
           {line.required && " (Required)"}
         </p>
       </div>
